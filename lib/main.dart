@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twenty_four/core/themes/manager/themesCubit/themes_cubit.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/manager/get_home_news/home_news_cubit.dart';
 import 'package:twenty_four/features/splash/splash_view.dart';
 
 // Global SharedPreferences instance
@@ -45,34 +46,40 @@ class AppView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ThemesCubit, ThemesState>(
       builder: (context, state) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: '24',
-          theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
-          themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
-          // إضافة دعم RTL للغة العربية
-          locale: const Locale('ar', 'EG'), // اللغة العربية - مصر
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (context) => HomeNewsCubit()),
+            // BlocProvider(create: (context) => SubjectBloc()),
           ],
-          supportedLocales: const [
-            Locale('ar', 'EG'), // العربية
-            Locale('en', 'US'), // الإنجليزية كبديل
-          ],
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: '24',
+            theme: AppThemes.lightTheme,
+            darkTheme: AppThemes.darkTheme,
+            themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
 
-          // تحديد اتجاه النص من اليمين إلى اليسار
-          builder: (context, child) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: child!,
-            );
-          },
+            // إضافة دعم RTL للغة العربية
+            locale: const Locale('ar', 'EG'), // اللغة العربية - مصر
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('ar', 'EG'), // العربية
+              Locale('en', 'US'), // الإنجليزية كبديل
+            ],
 
-          home: const SplashView(),
+            // تحديد اتجاه النص من اليمين إلى اليسار
+            builder: (context, child) {
+              return Directionality(
+                textDirection: TextDirection.rtl,
+                child: child!,
+              );
+            },
+
+            home: const SplashView(),
+          ),
         );
       },
     );

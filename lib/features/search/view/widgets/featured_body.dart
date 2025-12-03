@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/home/view/widgets/components/side_image_news_card.dart';
 
 class FeaturedBody extends StatelessWidget {
@@ -24,7 +25,7 @@ class FeaturedBody extends StatelessWidget {
             key: ValueKey('news_card_$index'), // مفتاح فريد لكل عنصر
             child: SideImageNewsCard(
               fromSearch: true,
-              data: data[index] as Map<String, dynamic>?,
+              newsModel: NewsModel.fromJson(data[index]),
             ),
           ),
         ),
@@ -51,7 +52,10 @@ class OptimizedNewsListView extends StatelessWidget {
       itemBuilder: (context, index) {
         return RepaintBoundary(
           // key: ValueKey('news_$index'),
-          child: SideImageNewsCard(data: newsList[index], fromSearch: true),
+          child: SideImageNewsCard(
+            newsModel: NewsModel.fromJson(newsList[index]),
+            fromSearch: true,
+          ),
         );
       },
     );

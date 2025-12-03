@@ -3,18 +3,19 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/news/view/news_details_view.dart';
 // import 'package:twenty_four/core/widgets/comments_view.dart';
 import 'package:twenty_four/main.dart';
 
 class HomeFirstTypeNewsCard extends StatelessWidget {
-  final Map data;
+  final Map<String, dynamic> data;
   const HomeFirstTypeNewsCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     final bool isDarkMode = prefs.getBool("isDarkMode") ?? false;
-
+    NewsModel newsModel = NewsModel.fromJson(data);
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -48,7 +49,7 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                       ClipRRect(
                         // borderRadius: BorderRadius.circular(8),
                         child: CachedNetworkImage(
-                          imageUrl: data["image"],
+                          imageUrl: newsModel.imageUrl!,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
@@ -142,7 +143,7 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                                 vertical: 4,
                               ),
                               child: Text(
-                                "الخبر اليوم",
+                                newsModel.source!,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -172,7 +173,7 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        data["title"],
+                        newsModel.title!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textDirection: TextDirection.rtl,
@@ -187,10 +188,10 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "03:25 AM ",
+                            newsModel.publishedAt!,
                             style: TextStyle(
                               color: AppThemes.getHintColor(isDarkMode),
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -198,7 +199,7 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                "4",
+                                newsModel.commentsCount.toString(),
                                 style: TextStyle(
                                   color: AppThemes.getTextColor(isDarkMode),
                                 ),

@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/news/view/news_details_view.dart';
 import 'package:twenty_four/main.dart';
 
 class SideImageNewsCard extends StatefulWidget {
   final bool fromSearch;
-  final Map<String, dynamic>? data;
+  final NewsModel newsModel;
   const SideImageNewsCard({
     super.key,
-    required this.data,
     required this.fromSearch,
+    required this.newsModel,
   });
 
   @override
@@ -25,27 +26,12 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
     var size = MediaQuery.sizeOf(context);
     final bool isDarkMode = prefs.getBool("isDarkMode") ?? false;
 
-    // التحقق من أن البيانات موجودة
-    if (widget.data == null) {
-      return SizedBox(
-        height: 120,
-        child: Center(
-          child: Text(
-            "لا توجد بيانات",
-            style: TextStyle(color: AppThemes.getTextColor(isDarkMode)),
-          ),
-        ),
-      );
-    }
-
-    // استخراج البيانات مع قيم افتراضية
-    final String title = widget.data?["title"]?.toString() ?? "بدون عنوان";
+    final String title = widget.newsModel.title?.toString() ?? "بدون عنوان";
     final String source =
-        widget.data?["source"]?.toString() ?? "مصدر غير معروف";
-    final String description =
-        widget.data?["description"]?.toString() ?? "بدون وصف";
-    final String imageUrl = widget.data?["image"]?.toString() ?? "";
-    final String sourceImage = widget.data?["source_image"]?.toString() ?? "";
+        widget.newsModel.source?.toString() ?? "مصدر غير معروف";
+    final String description = widget.newsModel.description.toString();
+    final String imageUrl = widget.newsModel.imageUrl?.toString() ?? "";
+    final String sourceImage = widget.newsModel.imageUrl?.toString() ?? "";
 
     return GestureDetector(
       onTap: () {
@@ -100,7 +86,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "3:50 AM",
+                                widget.newsModel.publishedAt.toString(),
                                 style: TextStyle(
                                   color: AppThemes.getHintColor(isDarkMode),
                                   fontSize: 14,
@@ -111,7 +97,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                               Row(
                                 children: [
                                   Text(
-                                    "4",
+                                    widget.newsModel.commentsCount.toString(),
                                     style: TextStyle(
                                       color: AppThemes.getTextColor(isDarkMode),
                                     ),

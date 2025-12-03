@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:twenty_four/core/fake_api.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/manager/get_home_news/home_news_cubit.dart';
 import 'package:twenty_four/features/home/view/widgets/types/full_news.dart';
 import 'package:twenty_four/features/home/view/widgets/types/horizontal_scroll.dart';
 import 'package:twenty_four/features/home/view/widgets/types/main_type.dart';
@@ -41,7 +42,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
+    BlocProvider.of<HomeNewsCubit>(context).getHomeNews();
     // Initialize animation controllers
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -121,7 +122,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: Listenable.merge([_fadeAnimation, _scaleAnimation]),
       builder: (context, child) {
-        List data = response["data"];
+        List data = BlocProvider.of<HomeNewsCubit>(context).screens;
         return Transform.scale(
           scale: scale,
           child: Container(
@@ -238,96 +239,226 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    var size = MediaQuery.sizeOf(context);
-    return Scaffold(
-      backgroundColor: AppThemes.getScaffoldColor(prefs.getBool("isDarkMode")!),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(66),
-        child: AppBar(
-          backgroundColor: Colors.transparent,
-          automaticallyImplyLeading: false,
-          elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle.light,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xff2b2f3a), Color(0xFF151924)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: Colors.red, strokeWidth: 3),
+          const SizedBox(height: 20),
+          Text(
+            'جاري تحميل الأخبار...',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 16,
             ),
-            child: SafeArea(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: Offset(0, -0.5),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child:
-                    currentPage == 0
-                        ? Container(
-                          key: ValueKey('categories'),
-                          color: Colors.transparent,
-                          child: Row(
-                            children: [
-                              // Logo section
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 16,
-                                  right: 8,
-                                ),
-                                child: Image.asset(
-                                  'assets/images/logo.png',
-                                  width: 80,
-                                  height: 30,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                              // Categories list
-                              Expanded(child: _buildCategoriesList()),
-                            ],
-                          ),
-                        )
-                        : Container(
-                          key: ValueKey('back'),
-                          color: Colors.transparent,
-                          alignment: Alignment.centerRight,
-                          child: _buildBackHeader(),
-                        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.newspaper_outlined,
+            size: 80,
+            color: Colors.white.withOpacity(0.3),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'لا توجد أخبار متاحة',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'يرجى المحاولة مرة أخرى لاحقاً',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 30),
+          ElevatedButton.icon(
+            onPressed: () {
+              BlocProvider.of<HomeNewsCubit>(context).getHomeNews();
+            },
+            icon: Icon(Icons.refresh),
+            label: Text('إعادة المحاولة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
-        ),
+        ],
       ),
-      body: PageView.builder(
-        controller: pageController,
-        scrollDirection: Axis.vertical,
-        onPageChanged: (index) {
-          setState(() {
-            currentPage = index;
-          });
-          _resetAndStartAnimations();
-          HapticFeedback.mediumImpact();
-        },
-        itemBuilder: (context, index) {
-          return SizedBox(
-            width: size.width,
-            height: size.height,
-            child: _buildAnimatedPage(index),
-          );
-        },
-        itemCount: response["data"].length,
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: Colors.red.withOpacity(0.7),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'حدث خطأ أثناء تحميل الأخبار',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'يرجى التحقق من الاتصال بالإنترنت',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 30),
+          ElevatedButton.icon(
+            onPressed: () {
+              BlocProvider.of<HomeNewsCubit>(context).getHomeNews();
+            },
+            icon: Icon(Icons.refresh),
+            label: Text('إعادة المحاولة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var size = MediaQuery.sizeOf(context);
+    return BlocBuilder<HomeNewsCubit, HomeNewsState>(
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: AppThemes.getScaffoldColor(
+            prefs.getBool("isDarkMode")!,
+          ),
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(66),
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              automaticallyImplyLeading: false,
+              elevation: 0,
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xff2b2f3a), Color(0xFF151924)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: SafeArea(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: Offset(0, -0.5),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child:
+                        currentPage == 0
+                            ? Container(
+                              key: ValueKey('categories'),
+                              color: Colors.transparent,
+                              child: Row(
+                                children: [
+                                  // Logo section
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 16,
+                                      right: 8,
+                                    ),
+                                    child: Image.asset(
+                                      'assets/images/logo.png',
+                                      width: 80,
+                                      height: 30,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                  // Categories list
+                                  Expanded(child: _buildCategoriesList()),
+                                ],
+                              ),
+                            )
+                            : Container(
+                              key: ValueKey('back'),
+                              color: Colors.transparent,
+                              alignment: Alignment.centerRight,
+                              child: _buildBackHeader(),
+                            ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          body:
+              state is HomeNewsLoading
+                  ? _buildLoadingState()
+                  : state is HomeNewsFailure
+                  ? _buildErrorState()
+                  : state is HomeNewssuccess &&
+                      BlocProvider.of<HomeNewsCubit>(context).screens.isEmpty
+                  ? _buildEmptyState()
+                  : PageView.builder(
+                    controller: pageController,
+                    scrollDirection: Axis.vertical,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentPage = index;
+                      });
+                      _resetAndStartAnimations();
+                      HapticFeedback.mediumImpact();
+                    },
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: size.width,
+                        height: size.height,
+                        child: _buildAnimatedPage(index),
+                      );
+                    },
+                    itemCount:
+                        BlocProvider.of<HomeNewsCubit>(context).screens.length,
+                  ),
+        );
+      },
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/home/view/widgets/components/share_dialog.dart';
 import 'package:twenty_four/main.dart';
 
@@ -17,7 +18,7 @@ class FullNews extends StatefulWidget {
 
 class _FullNewsState extends State<FullNews>
     with SingleTickerProviderStateMixin {
-  int _commentCount = 444;
+  // int _commentCount = 444;
   late AnimationController _animationController;
 
   @override
@@ -28,7 +29,7 @@ class _FullNewsState extends State<FullNews>
       vsync: this,
     );
     // Initialize like count from data or default
-    _commentCount = widget.data['comments'] as int? ?? 444;
+    // _commentCount = widget.data['comments'] as int? ?? 444;
   }
 
   @override
@@ -54,7 +55,7 @@ class _FullNewsState extends State<FullNews>
   @override
   Widget build(BuildContext context) {
     final isDarkMode = prefs.getBool("isDarkMode") ?? false;
-
+    NewsModel newsModel = NewsModel.fromJson(widget.data);
     return Scaffold(
       backgroundColor: AppThemes.getScaffoldColor(isDarkMode),
       body: SafeArea(
@@ -70,7 +71,7 @@ class _FullNewsState extends State<FullNews>
                     AspectRatio(
                       aspectRatio: 16 / 9,
                       child: CachedNetworkImage(
-                        imageUrl: widget.data["image"] ?? '',
+                        imageUrl: newsModel.imageUrl!,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         placeholder:
@@ -102,7 +103,7 @@ class _FullNewsState extends State<FullNews>
                         children: [
                           // Title
                           Text(
-                            widget.data["title"] ?? 'No title available',
+                            newsModel.title!,
                             style: Theme.of(
                               context,
                             ).textTheme.headlineMedium?.copyWith(
@@ -116,14 +117,14 @@ class _FullNewsState extends State<FullNews>
                           Row(
                             children: [
                               Text(
-                                widget.data["source"] ?? 'Unknown source',
+                                newsModel.source ?? 'Unknown source',
                                 style: TextStyle(
                                   color: AppThemes.getHintColor(isDarkMode),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if (widget.data["publishedAt"] != null) ...[
+                              if (newsModel.publishedAt != null) ...[
                                 const Gap(8),
                                 Text(
                                   '•',
@@ -133,7 +134,7 @@ class _FullNewsState extends State<FullNews>
                                 ),
                                 const Gap(8),
                                 Text(
-                                  widget.data["publishedAt"] ?? '',
+                                  newsModel.publishedAt ?? '',
                                   style: TextStyle(
                                     color: AppThemes.getHintColor(isDarkMode),
                                     fontSize: 14,
@@ -146,9 +147,7 @@ class _FullNewsState extends State<FullNews>
 
                           // Description/Content
                           Text(
-                            widget.data["description"] ??
-                                widget.data["content"] ??
-                                'No content available',
+                            newsModel.description!,
                             style: Theme.of(
                               context,
                             ).textTheme.bodyLarge?.copyWith(
@@ -198,7 +197,7 @@ class _FullNewsState extends State<FullNews>
                           ),
                           const Gap(4),
                           Text(
-                            _commentCount.toString(),
+                            newsModel.commentsCount.toString(),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,

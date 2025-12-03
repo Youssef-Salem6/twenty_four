@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/home/view/widgets/components/home_first_type_news_card.dart';
 import 'package:twenty_four/features/news/view/news_details_view.dart';
 import 'package:twenty_four/main.dart';
@@ -13,6 +14,7 @@ class MainType extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // الرابط الثابت للصورة الدائرية
+    NewsModel newsModel = NewsModel.fromJson(data[0]);
     return Column(
       children: [
         Expanded(
@@ -29,7 +31,7 @@ class MainType extends StatelessWidget {
                 children: [
                   // Background Image with Caching
                   CachedNetworkImage(
-                    imageUrl: data[0]["image"],
+                    imageUrl: newsModel.imageUrl!,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
@@ -122,10 +124,10 @@ class MainType extends StatelessWidget {
                                     vertical: 4,
                                   ),
                                   child: Text(
-                                    "الخبر اليوم",
+                                    newsModel.source!,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       shadows: [
                                         Shadow(
@@ -142,7 +144,7 @@ class MainType extends StatelessWidget {
                               ],
                             ),
                             Text(
-                              data[0]["title"],
+                              newsModel.title!,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -160,7 +162,7 @@ class MainType extends StatelessWidget {
                                 ),
                                 Gap(5),
                                 Text(
-                                  data[0]["source"],
+                                  newsModel.publishedAt!,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -179,7 +181,7 @@ class MainType extends StatelessWidget {
                                 ),
                                 Gap(5),
                                 Text(
-                                  "33",
+                                  newsModel.commentsCount.toString(),
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,

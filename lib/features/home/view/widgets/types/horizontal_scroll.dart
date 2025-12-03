@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/news/view/news_details_view.dart';
 import 'package:twenty_four/main.dart';
 
@@ -71,15 +72,7 @@ class HorizontalScroll extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: news.length,
                 itemBuilder: (context, index) {
-                  Map data = news[index];
-
-                  final String imageUrl = data["image"]?.toString() ?? "";
-                  final String category =
-                      data["category"]?.toString() ?? "بدون فئة";
-                  final String title =
-                      data["title"]?.toString() ?? "بدون عنوان";
-                  final String source =
-                      data["source"]?.toString() ?? "مصدر غير معروف";
+                  NewsModel newsModel = NewsModel.fromJson(news[index]);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(
@@ -120,7 +113,7 @@ class HorizontalScroll extends StatelessWidget {
                                       Container(
                                         width: double.infinity,
                                         child: CachedNetworkImage(
-                                          imageUrl: imageUrl,
+                                          imageUrl: newsModel.imageUrl!,
                                           width: double.infinity,
                                           height: double.infinity,
                                           fit: BoxFit.cover,
@@ -243,7 +236,7 @@ class HorizontalScroll extends StatelessWidget {
                                               // Source name
                                               Expanded(
                                                 child: Text(
-                                                  source,
+                                                  newsModel.source!,
                                                   style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 14,
@@ -281,9 +274,9 @@ class HorizontalScroll extends StatelessWidget {
                                             decoration: BoxDecoration(
                                               color:
                                                   isDarkMode
-                                                      ? Colors.blue.withOpacity(
-                                                        0.2,
-                                                      )
+                                                      ? Color(
+                                                        0xFF282828,
+                                                      ).withOpacity(1)
                                                       : Color(
                                                         0xFF151924,
                                                       ).withOpacity(0.1),
@@ -291,13 +284,10 @@ class HorizontalScroll extends StatelessWidget {
                                                   BorderRadius.circular(6),
                                             ),
                                             child: Text(
-                                              category,
+                                              newsModel.category!,
                                               style: TextStyle(
-                                                color:
-                                                    isDarkMode
-                                                        ? Colors.blue.shade300
-                                                        : Color(0xFF151924),
-                                                fontSize: 11,
+                                                color: Colors.red,
+                                                fontSize: 12,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -306,7 +296,7 @@ class HorizontalScroll extends StatelessWidget {
                                           // Title
                                           Expanded(
                                             child: Text(
-                                              title,
+                                              newsModel.title!,
                                               style: TextStyle(
                                                 color: AppThemes.getTextColor(
                                                   isDarkMode,
@@ -335,7 +325,7 @@ class HorizontalScroll extends StatelessWidget {
                                                   ),
                                                   SizedBox(width: 4),
                                                   Text(
-                                                    "الاربعاء 3:40 AM",
+                                                    newsModel.publishedAt!,
                                                     style: TextStyle(
                                                       color:
                                                           AppThemes.getHintColor(
@@ -350,7 +340,8 @@ class HorizontalScroll extends StatelessWidget {
                                               Row(
                                                 children: [
                                                   Text(
-                                                    "4",
+                                                    newsModel.commentsCount
+                                                        .toString(),
                                                     style: TextStyle(
                                                       color:
                                                           AppThemes.getTextColor(
