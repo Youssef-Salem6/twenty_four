@@ -7,3 +7,8 @@ const String homeNews = "$endPoint/home";
 const String registerApi = "$endPoint/register";
 const String loginApi = "$endPoint/login";
 const String logOutApi = "$endPoint/logout";
+
+//search
+
+String searchArticalUrl =
+    "https://alithad.corpintech.com/api/cp/articles?search";

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twenty_four/core/themes/manager/themesCubit/themes_cubit.dart';
 import 'package:twenty_four/core/themes/themes.dart';
 import 'package:twenty_four/features/home/manager/get_home_news/home_news_cubit.dart';
+import 'package:twenty_four/features/search/manager/artical_search/artical_search_cubit.dart';
 import 'package:twenty_four/features/splash/splash_view.dart';
 
 // Global SharedPreferences instance
@@ -49,6 +50,7 @@ class AppView extends StatelessWidget {
         return MultiBlocProvider(
           providers: [
             BlocProvider(create: (context) => HomeNewsCubit()),
+            BlocProvider(create: (context) => ArticalSearchCubit()),
             // BlocProvider(create: (context) => SubjectBloc()),
           ],
           child: MaterialApp(
