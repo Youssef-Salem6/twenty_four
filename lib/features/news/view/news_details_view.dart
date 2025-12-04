@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/widgets/comments_view.dart';
+import 'package:twenty_four/core/widgets/login_alert.dart';
 import 'package:twenty_four/main.dart';
 
 class NewsDetailsView extends StatefulWidget {
@@ -398,12 +399,16 @@ class _NewsDetailsViewState extends State<NewsDetailsView>
                     const Gap(12),
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          CommentsView.show(
-                            context,
-                            newsData['comments'],
-                            isDarkMode: prefs.getBool("isDarkMode")!,
-                          );
+                        onTap: () async {
+                          if (prefs.getString("token") == null) {
+                            await LoginAlert.show(context);
+                          } else {
+                            CommentsView.show(
+                              context,
+                              newsData['comments'],
+                              isDarkMode: prefs.getBool("isDarkMode")!,
+                            );
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -436,12 +441,16 @@ class _NewsDetailsViewState extends State<NewsDetailsView>
                           color: Colors.white,
                           size: 20,
                         ),
-                        onPressed: () {
-                          CommentsView.show(
-                            context,
-                            newsData['comments'],
-                            isDarkMode: prefs.getBool("isDarkMode")!,
-                          );
+                        onPressed: () async {
+                          if (prefs.getString("token") == null) {
+                            await LoginAlert.show(context);
+                          } else {
+                            CommentsView.show(
+                              context,
+                              newsData['comments'],
+                              isDarkMode: prefs.getBool("isDarkMode")!,
+                            );
+                          }
                         },
                       ),
                     ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/core/widgets/login_alert.dart';
+import 'package:twenty_four/main.dart';
 // import 'app_themes.dart'; // Make sure to import your themes file
 
 class CommentsView extends StatefulWidget {
@@ -289,10 +291,14 @@ class _CommentsViewState extends State<CommentsView>
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
-                            onPressed: () {
-                              if (_commentController.text.trim().isNotEmpty) {
-                                // Handle send comment
-                                _commentController.clear();
+                            onPressed: () async {
+                              if (prefs.getString("token") == null) {
+                                await LoginAlert.show(context);
+                              } else {
+                                if (_commentController.text.trim().isNotEmpty) {
+                                  // Handle send comment
+                                  _commentController.clear();
+                                }
                               }
                             },
                             icon: const Icon(
