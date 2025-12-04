@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:twenty_four/core/nav_bar.dart';
 import 'dart:math' as math;
-
-import 'package:twenty_four/features/auth/view/login_view.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -50,7 +49,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
+          MaterialPageRoute(builder: (context) => const NavBar()),
         );
       }
     });

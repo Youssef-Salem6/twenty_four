@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:twenty_four/core/nav_bar.dart';
+import 'package:twenty_four/features/auth/manager/login/login_cubit.dart';
 import 'package:twenty_four/features/auth/view/register_view.dart';
 
 class LoginView extends StatefulWidget {
@@ -71,222 +74,341 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  void _handleLogin(BuildContext context) {
+    // Validation
+    if (_emailController.text.trim().isEmpty) {
+      _showSnackBar(context, 'الرجاء إدخال البريد الإلكتروني', Colors.orange);
+      return;
+    }
+    if (_passwordController.text.trim().isEmpty) {
+      _showSnackBar(context, 'الرجاء إدخال كلمة المرور', Colors.orange);
+      return;
+    }
+
+    // Call login
+    context.read<LoginCubit>().login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontFamily: 'Almarai')),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: AnimatedBuilder(
-          animation: _gradientAnimation,
-          builder: (context, child) {
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color.lerp(
-                      const Color(0xff2b2f3a),
-                      const Color(0xff1a4d7a),
-                      _gradientAnimation.value,
-                    )!,
-                    Color.lerp(
-                      const Color(0xFF151924),
-                      const Color(0xff0d1b2a),
-                      _gradientAnimation.value,
-                    )!,
-                  ],
-                ),
-              ),
-              child: child,
-            );
-          },
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Logo with pulse animation
-                        TweenAnimationBuilder(
-                          tween: Tween<double>(begin: 0.8, end: 1.0),
-                          duration: const Duration(milliseconds: 800),
-                          curve: Curves.elasticOut,
-                          builder: (context, double scale, child) {
-                            return Transform.scale(
-                              scale: scale,
-                              child: Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.blue.shade400,
-                                      Colors.blue.shade700,
+    return BlocProvider(
+      create: (context) => LoginCubit(),
+      child: BlocConsumer<LoginCubit, LoginState>(
+        listener: (context, state) {
+          if (state is LoginSuccess) {
+            // Close loading dialog if exists
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+
+            _showSnackBar(context, state.message, Colors.green);
+
+            // Navigate to NavBar
+            Future.delayed(const Duration(milliseconds: 500), () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const NavBar()),
+                (route) => false,
+              );
+            });
+          } else if (state is LoginFailure) {
+            // Close loading dialog if exists
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+
+            _showSnackBar(context, state.message, Colors.red);
+          }
+        },
+        builder: (context, state) {
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  // Main content
+                  AnimatedBuilder(
+                    animation: _gradientAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.lerp(
+                                const Color(0xff2b2f3a),
+                                const Color(0xff1a4d7a),
+                                _gradientAnimation.value,
+                              )!,
+                              Color.lerp(
+                                const Color(0xFF151924),
+                                const Color(0xff0d1b2a),
+                                _gradientAnimation.value,
+                              )!,
+                            ],
+                          ),
+                        ),
+                        child: child,
+                      );
+                    },
+                    child: SafeArea(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Logo with pulse animation
+                                  TweenAnimationBuilder(
+                                    tween: Tween<double>(begin: 0.8, end: 1.0),
+                                    duration: const Duration(milliseconds: 800),
+                                    curve: Curves.elasticOut,
+                                    builder: (context, double scale, child) {
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.blue.shade400,
+                                                Colors.blue.shade700,
+                                              ],
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.blue.withOpacity(
+                                                  0.3,
+                                                ),
+                                                blurRadius: 20,
+                                                spreadRadius: 5,
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.lock_outline,
+                                            size: 50,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 40),
+
+                                  // Welcome Text
+                                  const Text(
+                                    'مرحباً بعودتك',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontFamily: 'Almarai',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'سجل الدخول للمتابعة',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontFamily: 'Almarai',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 50),
+
+                                  // Email Field
+                                  _buildTextField(
+                                    controller: _emailController,
+                                    hintText: 'البريد الإلكتروني',
+                                    icon: Icons.email_outlined,
+                                    keyboardType: TextInputType.emailAddress,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Password Field
+                                  _buildTextField(
+                                    controller: _passwordController,
+                                    hintText: 'كلمة المرور',
+                                    icon: Icons.lock_outline,
+                                    isPassword: true,
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Forgot Password
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        _showSnackBar(
+                                          context,
+                                          'ميزة استعادة كلمة المرور قريباً',
+                                          Colors.blue,
+                                        );
+                                      },
+                                      child: Text(
+                                        'نسيت كلمة المرور؟',
+                                        style: TextStyle(
+                                          color: Colors.blue.shade300,
+                                          fontFamily: 'Almarai',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 30),
+
+                                  // Login Button
+                                  _buildLoginButton(context, state),
+                                  const SizedBox(height: 30),
+
+                                  // Divider
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Divider(
+                                          color: Colors.white.withOpacity(0.3),
+                                          thickness: 1,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                        ),
+                                        child: Text(
+                                          'أو',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.6,
+                                            ),
+                                            fontFamily: 'Almarai',
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Divider(
+                                          color: Colors.white.withOpacity(0.3),
+                                          thickness: 1,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      // ignore: deprecated_member_use
-                                      color: Colors.blue.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: 5,
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.lock_outline,
-                                  size: 50,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 40),
+                                  const SizedBox(height: 30),
 
-                        // Welcome Text
-                        const Text(
-                          'مرحباً بعودتك',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontFamily: 'Almarai',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'سجل الدخول للمتابعة',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withOpacity(0.7),
-                            fontFamily: 'Almarai',
-                          ),
-                        ),
-                        const SizedBox(height: 50),
+                                  // Google Login Button
+                                  _buildGoogleButton(),
+                                  const SizedBox(height: 30),
 
-                        // Email Field
-                        _buildTextField(
-                          controller: _emailController,
-                          hintText: 'البريد الإلكتروني',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Password Field
-                        _buildTextField(
-                          controller: _passwordController,
-                          hintText: 'كلمة المرور',
-                          icon: Icons.lock_outline,
-                          isPassword: true,
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Forgot Password
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              'نسيت كلمة المرور؟',
-                              style: TextStyle(
-                                color: Colors.blue.shade300,
-                                fontFamily: 'Almarai',
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Login Button
-                        _buildLoginButton(),
-                        const SizedBox(height: 30),
-
-                        // Divider
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Divider(
-                                color: Colors.white.withOpacity(0.3),
-                                thickness: 1,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: Text(
-                                'أو',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontFamily: 'Almarai',
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Divider(
-                                color: Colors.white.withOpacity(0.3),
-                                thickness: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Google Login Button
-                        _buildGoogleButton(),
-                        const SizedBox(height: 30),
-
-                        // Sign Up Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'ليس لديك حساب؟ ',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontFamily: 'Almarai',
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => RegisterView(),
+                                  // Sign Up Link
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'ليس لديك حساب؟ ',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.7),
+                                          fontFamily: 'Almarai',
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (context) =>
+                                                      const RegisterView(),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'إنشاء حساب',
+                                          style: TextStyle(
+                                            color: Colors.blue.shade300,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Almarai',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
-                              child: Text(
-                                'إنشاء حساب',
-                                style: TextStyle(
-                                  color: Colors.blue.shade300,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Almarai',
-                                ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+
+                  // Loading overlay
+                  if (state is LoginLoading)
+                    Container(
+                      color: Colors.black54,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff2b2f3a),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(
+                                color: Colors.blue.shade400,
+                                strokeWidth: 3,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'جاري تسجيل الدخول...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontFamily: 'Almarai',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -359,18 +481,23 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoginButton() {
+  Widget _buildLoginButton(BuildContext context, LoginState state) {
+    bool isLoading = state is LoginLoading;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade700],
+          colors:
+              isLoading
+                  ? [Colors.grey.shade400, Colors.grey.shade600]
+                  : [Colors.blue.shade400, Colors.blue.shade700],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: (isLoading ? Colors.grey : Colors.blue).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -379,18 +506,28 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: isLoading ? null : () => _handleLogin(context),
           borderRadius: BorderRadius.circular(16),
-          child: const Center(
-            child: Text(
-              'تسجيل الدخول',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Almarai',
-              ),
-            ),
+          child: Center(
+            child:
+                isLoading
+                    ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                    : const Text(
+                      'تسجيل الدخول',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Almarai',
+                      ),
+                    ),
           ),
         ),
       ),
@@ -414,7 +551,9 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            _showSnackBar(context, 'تسجيل الدخول بجوجل قريباً', Colors.blue);
+          },
           borderRadius: BorderRadius.circular(16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
