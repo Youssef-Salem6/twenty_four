@@ -4,56 +4,57 @@ import 'package:twenty_four/features/home/view/widgets/components/side_image_new
 
 class FeaturedBody extends StatelessWidget {
   final List data;
+  final ScrollController? scrollController;
+  final EdgeInsetsGeometry? padding;
+  final bool shrinkWrap;
 
-  const FeaturedBody({super.key, required this.data});
+  const FeaturedBody({
+    super.key,
+    required this.data,
+    this.scrollController,
+    this.padding,
+    this.shrinkWrap = false,
+  });
+
   @override
   Widget build(BuildContext context) {
     // التحقق من وجود البيانات
     if (data.isEmpty) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: Text("لا توجد أخبار")),
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Text(
+            "لا توجد أخبار لعرضها",
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        children: List.generate(
-          data.length > 3 ? 3 : data.length, // أقصى 3 عناصر
-          (index) => RepaintBoundary(
-            key: ValueKey('news_card_$index'), // مفتاح فريد لكل عنصر
-            child: SideImageNewsCard(
-              fromSearch: true,
-              newsModel: NewsModel.fromJson(data[index]),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// إضافة: كلاس مساعد للقوائم الطويلة (اختياري)
-class OptimizedNewsListView extends StatelessWidget {
-  final List<Map<String, dynamic>> newsList;
-  const OptimizedNewsListView({super.key, required this.newsList});
-
-  @override
-  Widget build(BuildContext context) {
     return ListView.builder(
-      // تحسينات الأداء
-      physics: const ClampingScrollPhysics(),
-      cacheExtent: 200, // تقليل cache
-      addAutomaticKeepAlives: false,
-      addRepaintBoundaries: true,
-
-      itemCount: newsList.length,
+      controller: scrollController,
+      shrinkWrap: shrinkWrap,
+      physics:
+          shrinkWrap
+              ? const NeverScrollableScrollPhysics()
+              : const ClampingScrollPhysics(),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: data.length,
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          // key: ValueKey('news_$index'),
+        final newsItem = data[index];
+
+        // استخدام ID الأخبار كمفتاح إذا كان موجوداً
+        final itemKey =
+            newsItem.containsKey('id')
+                ? ValueKey('news_${newsItem['id']}')
+                : ValueKey('news_$index');
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
           child: SideImageNewsCard(
-            newsModel: NewsModel.fromJson(newsList[index]),
+            key: itemKey,
+            newsModel: NewsModel.fromJson(newsItem),
             fromSearch: true,
           ),
         );

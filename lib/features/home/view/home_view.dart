@@ -361,7 +361,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: AppThemes.getScaffoldColor(
-            prefs.getBool("isDarkMode")!,
+            prefs.getBool("isDarkMode") ?? false,
           ),
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(66),

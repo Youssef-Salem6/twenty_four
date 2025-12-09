@@ -117,7 +117,7 @@ class _SearchViewState extends State<SearchView> {
         resizeToAvoidBottomInset:
             true, // This makes the scaffold resize when keyboard appears
         backgroundColor: AppThemes.getScaffoldColor(
-          prefs.getBool("isDarkMode")!,
+          prefs.getBool("isDarkMode") ?? false,
         ),
         appBar: AppBar(
           backgroundColor: Colors.transparent,

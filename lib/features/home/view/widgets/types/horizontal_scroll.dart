@@ -86,7 +86,9 @@ class HorizontalScroll extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => NewsDetailsView(),
+                                builder:
+                                    (context) =>
+                                        NewsDetailsView(id: newsModel.id!),
                               ),
                             );
                           },

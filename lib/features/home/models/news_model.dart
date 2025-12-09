@@ -18,7 +18,7 @@ class NewsModel {
   NewsModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     title = json['title'];
-    imageUrl = json['image'];
+    imageUrl = json["image"];
     source = json['source'];
     category = json['category'];
     sourceImageUrl = json['source_image'];
@@ -27,3 +27,5 @@ class NewsModel {
     publishedAt = json['published_date'];
   }
 }
+
+  

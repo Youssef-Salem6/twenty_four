@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
 import 'package:twenty_four/features/home/models/news_model.dart';
-import 'package:twenty_four/features/home/view/widgets/components/share_dialog.dart';
 import 'package:twenty_four/main.dart';
 
 class FullNews extends StatefulWidget {
@@ -38,19 +37,19 @@ class _FullNewsState extends State<FullNews>
     super.dispose();
   }
 
-  void _shareNews() {
-    HapticFeedback.selectionClick();
-    showDialog(
-      context: context,
-      builder:
-          (context) => ShareDialog(
-            newsLink:
-                widget.data["url"] ??
-                "https://example.com/news/${widget.data["id"] ?? "1"}",
-            newsTitle: widget.data["title"] ?? "News Title",
-          ),
-    );
-  }
+  // void _shareNews() {
+  //   HapticFeedback.selectionClick();
+  //   showDialog(
+  //     context: context,
+  //     builder:
+  //         (context) => ShareDialog(
+  //           newsLink:
+  //               widget.data["url"] ??
+  //               "https://example.com/news/${widget.data["id"] ?? "1"}",
+  //           newsTitle: widget.data["title"] ?? "News Title",
+  //         ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -198,35 +197,6 @@ class _FullNewsState extends State<FullNews>
                           const Gap(4),
                           Text(
                             newsModel.commentsCount.toString(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: AppThemes.getTextColor(isDarkMode),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Share
-                  InkWell(
-                    onTap: _shareNews,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 12,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.share,
-                            size: 24,
-                            color: AppThemes.getIconColor(isDarkMode),
-                          ),
-                          const Gap(4),
-                          Text(
-                            'Share',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,

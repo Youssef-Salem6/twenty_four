@@ -1,7 +1,16 @@
-const String endPoint = "http://192.168.1.29:8000/api/cp";
+import 'package:twenty_four/main.dart';
 
+const String endPoint = "https://new.the24.net/api/cp";
+
+Map<String, String> headers = {
+  'Authorization': 'Bearer ${prefs.getString("token")}',
+  "Accept": "application/json",
+};
 //home news
 const String homeNews = "$endPoint/home";
+
+//news details
+const String getNewsDetailsUrl = "$endPoint/articles";
 
 //auth
 const String registerApi = "$endPoint/register";
@@ -10,5 +19,4 @@ const String logOutApi = "$endPoint/logout";
 
 //search
 
-String searchArticalUrl =
-    "https://alithad.corpintech.com/api/cp/articles?search";
+String searchArticalUrl = "$getNewsDetailsUrl?search";

@@ -5,7 +5,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twenty_four/core/themes/manager/themesCubit/themes_cubit.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/comments/manager/add_comment/add_comment_cubit.dart';
+import 'package:twenty_four/features/comments/manager/getComments/get_all_comments_cubit.dart';
 import 'package:twenty_four/features/home/manager/get_home_news/home_news_cubit.dart';
+import 'package:twenty_four/features/news/manager/getNewsDetails/get_news_details_cubit.dart';
 import 'package:twenty_four/features/search/manager/artical_search/artical_search_cubit.dart';
 import 'package:twenty_four/features/splash/splash_view.dart';
 
@@ -51,7 +54,9 @@ class AppView extends StatelessWidget {
           providers: [
             BlocProvider(create: (context) => HomeNewsCubit()),
             BlocProvider(create: (context) => ArticalSearchCubit()),
-            // BlocProvider(create: (context) => SubjectBloc()),
+            BlocProvider(create: (context) => GetNewsDetailsCubit()),
+            BlocProvider(create: (context) => GetAllCommentsCubit()),
+            BlocProvider(create: (context) => AddCommentCubit()),
           ],
           child: MaterialApp(
             debugShowCheckedModeBanner: false,

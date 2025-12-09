@@ -23,7 +23,7 @@ class _ProfileViewState extends State<ProfileView> {
 
         return Scaffold(
           backgroundColor: AppThemes.getScaffoldColor(
-            prefs.getBool("isDarkMode")!,
+            prefs.getBool("isDarkMode") ?? false,
           ),
           body: CustomScrollView(
             slivers: [

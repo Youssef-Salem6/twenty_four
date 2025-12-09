@@ -37,7 +37,9 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => NewsDetailsView()),
+          MaterialPageRoute(
+            builder: (context) => NewsDetailsView(id: widget.newsModel.id!),
+          ),
         );
       },
       child: Padding(
@@ -68,7 +70,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                               fontSize: 18,
                               color: AppThemes.getTextColor(isDarkMode),
                             ),
-                            maxLines: 3,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Visibility(
@@ -78,7 +80,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                                 fontSize: 14,
                                 color: AppThemes.getTextColor(isDarkMode),
                               ),
-                              maxLines: 4,
+                              maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),

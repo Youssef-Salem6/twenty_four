@@ -5,7 +5,6 @@ import 'package:gap/gap.dart';
 import 'package:twenty_four/core/themes/themes.dart';
 import 'package:twenty_four/features/home/models/news_model.dart';
 import 'package:twenty_four/features/news/view/news_details_view.dart';
-// import 'package:twenty_four/core/widgets/comments_view.dart';
 import 'package:twenty_four/main.dart';
 
 class HomeFirstTypeNewsCard extends StatelessWidget {
@@ -21,7 +20,9 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => NewsDetailsView()),
+            MaterialPageRoute(
+              builder: (context) => NewsDetailsView(id: newsModel.id!),
+            ),
           );
         },
         child: Container(

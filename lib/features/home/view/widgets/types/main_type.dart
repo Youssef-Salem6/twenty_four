@@ -23,7 +23,9 @@ class MainType extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => NewsDetailsView()),
+                MaterialPageRoute(
+                  builder: (context) => NewsDetailsView(id: newsModel.id!),
+                ),
               );
             },
             child: ClipRRect(
