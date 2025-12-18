@@ -53,7 +53,6 @@ class _ProfileViewState extends State<ProfileView> {
                   ),
                 ),
               ),
-
               // Profile Content
               SliverToBoxAdapter(
                 child: Stack(

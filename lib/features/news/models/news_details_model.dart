@@ -4,7 +4,7 @@ import 'package:twenty_four/features/news/models/section_model.dart';
 class NewsDetailsModel {
   int? id, likeCount, commentCount;
   String? title, description, imageTitle, source, sourceLogo;
-  String? publishedAt, geminiSummary, body, image;
+  String? publishedAt, geminiSummary, body, image, sourceUrl;
   List? tags, keyWords, comments, faqs;
   // NewsImagesModel? newsImagesModel;
   NewsWriterModel? newsWriterModel;
@@ -30,6 +30,8 @@ class NewsDetailsModel {
     required this.likeCount,
     required this.liked,
     required this.image,
+    required this.sourceLogo,
+    required this.sourceUrl,
   });
 
   NewsDetailsModel.fromJson({required Map json}) {
@@ -44,6 +46,7 @@ class NewsDetailsModel {
     likeCount = json["likes_count"];
     source = json["source"] ?? "Twenty Four";
     sourceLogo = json["source_logo"];
+    sourceUrl = json["source_url"];
 
     // Fix: Check if section exists and is not null
     if (json["section"] != null && json["section"] is Map) {

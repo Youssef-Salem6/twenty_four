@@ -4,6 +4,7 @@ import 'package:twenty_four/features/comments/view/comments_view.dart';
 import 'package:twenty_four/features/news/models/news_details_model.dart';
 import 'package:twenty_four/features/news/view/widgets/ai_summary_view.dart';
 import 'package:twenty_four/features/news/view/widgets/faq_view.dart';
+import 'package:twenty_four/features/webView/web_view.dart';
 import 'package:twenty_four/main.dart';
 
 class NewsContent extends StatefulWidget {
@@ -77,7 +78,26 @@ class _NewsContentState extends State<NewsContent>
                 _buildDescription(theme),
                 _buildBodyContent(theme),
                 const Gap(30),
-
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // Navigate to the WebView
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) =>
+                                    WebView(url: widget.newsDetails.sourceUrl!),
+                          ),
+                        );
+                      },
+                      child: Text("الخبر كامل في الموقع الرسمي"),
+                    ),
+                  ],
+                ),
+                const Gap(30),
                 // عرض AI Summary فقط إذا كان موجوداً
                 if (widget.newsDetails.geminiSummary != null &&
                     widget.newsDetails.geminiSummary!.isNotEmpty)
@@ -189,6 +209,7 @@ class _NewsContentState extends State<NewsContent>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Text(
+        maxLines: 10,
         textAlign: TextAlign.justify,
         widget.newsDetails.body!,
         style: theme.textTheme.bodyMedium?.copyWith(

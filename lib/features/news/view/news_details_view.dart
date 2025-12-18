@@ -23,13 +23,13 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
   @override
   void initState() {
     super.initState();
-    
+
     _scrollController.addListener(() {
       setState(() {
         _scrollOffset = _scrollController.offset;
       });
     });
-    
+
     BlocProvider.of<GetNewsDetailsCubit>(context).getNewsDetails(id: widget.id);
   }
 
@@ -95,10 +95,7 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
                   scrollOffset: _scrollOffset,
                   onBackPressed: () => Navigator.pop(context),
                 ),
-                NewsContent(
-                  newsDetails: newsDetails,
-                  isDarkMode: isDarkMode,
-                ),
+                NewsContent(newsDetails: newsDetails, isDarkMode: isDarkMode),
               ],
             ),
             FloatingCommentButton(
