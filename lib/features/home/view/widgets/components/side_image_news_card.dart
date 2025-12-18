@@ -31,7 +31,8 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
         widget.newsModel.source?.toString() ?? "مصدر غير معروف";
     final String description = widget.newsModel.description.toString();
     final String imageUrl = widget.newsModel.imageUrl?.toString() ?? "";
-    final String sourceImage = widget.newsModel.imageUrl?.toString() ?? "";
+    final String sourceImage =
+        widget.newsModel.sourceImageUrl?.toString() ?? "";
 
     return GestureDetector(
       onTap: () {
@@ -232,7 +233,9 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                                           sourceImage.isNotEmpty
                                               ? CachedNetworkImage(
                                                 imageUrl:
-                                                    "https://images.unsplash.com/photo-1664575602554-2087b04935a5",
+                                                    widget
+                                                        .newsModel
+                                                        .sourceImageUrl!,
                                                 width: 20,
                                                 height: 20,
                                                 fit: BoxFit.cover,

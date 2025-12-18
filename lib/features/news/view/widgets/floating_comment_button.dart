@@ -66,7 +66,7 @@ class FloatingCommentButton extends StatelessWidget {
             const Gap(8),
             Container(
               decoration: BoxDecoration(
-                color: theme.primaryColor,
+                color: Colors.red[300],
                 shape: BoxShape.circle,
               ),
               child: IconButton(

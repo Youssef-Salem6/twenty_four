@@ -5,7 +5,6 @@ import 'package:twenty_four/core/themes/themes.dart';
 import 'package:twenty_four/features/auth/manager/logout/log_out_cubit.dart';
 import 'package:twenty_four/features/auth/view/login_view.dart';
 import 'package:twenty_four/main.dart';
-
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
 
@@ -19,7 +18,7 @@ class _ProfileViewState extends State<ProfileView> {
     return BlocBuilder<ThemesCubit, ThemesState>(
       builder: (context, state) {
         // Check if user is logged in
-        final bool isLoggedIn = prefs.getString("token") != null;
+        final bool isLoggedIn = userPref.getString("token") != null;
 
         return Scaffold(
           backgroundColor: AppThemes.getScaffoldColor(
@@ -103,7 +102,7 @@ class _ProfileViewState extends State<ProfileView> {
 
                           // Name
                           Text(
-                            'أحمد محمد',
+                            userPref.getString("firstName")!,
                             style: TextStyle(
                               color: AppThemes.getTextColor(state.isDarkMode),
                               fontSize: 24,
@@ -114,7 +113,7 @@ class _ProfileViewState extends State<ProfileView> {
 
                           // Username
                           Text(
-                            '@ahmed_mohamed',
+                            userPref.getString("email")!,
                             style: TextStyle(
                               color: AppThemes.getTextColor(
                                 state.isDarkMode,

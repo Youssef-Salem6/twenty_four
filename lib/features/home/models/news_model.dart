@@ -21,11 +21,9 @@ class NewsModel {
     imageUrl = json["image"];
     source = json['source'];
     category = json['category'];
-    sourceImageUrl = json['source_image'];
+    sourceImageUrl = json['source_logo'];
     description = json['description'];
     commentsCount = json['comments_count'];
     publishedAt = json['published_date'];
   }
 }
-
-  

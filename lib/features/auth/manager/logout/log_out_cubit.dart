@@ -47,6 +47,6 @@ class LogOutCubit extends Cubit<LogOutState> {
   }
 
   Future<void> _clearPrefs() async {
-    await prefs.clear();
+    await userPref.clear();
   }
 }

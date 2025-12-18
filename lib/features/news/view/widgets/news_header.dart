@@ -24,7 +24,7 @@ class NewsHeader extends StatelessWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       leading: _buildIconButton(
         context,
-        icon: Icons.arrow_forward,
+        icon: Icons.arrow_back, // Changed from arrow_forward to arrow_back
         onPressed: onBackPressed,
         isDarkMode: isDarkMode,
       ),
@@ -150,7 +150,7 @@ class NewsHeader extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor,
+          color: Colors.red,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(

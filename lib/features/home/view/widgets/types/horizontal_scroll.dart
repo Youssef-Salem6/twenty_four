@@ -17,9 +17,6 @@ class HorizontalScroll extends StatelessWidget {
     final isDarkMode = prefs.getBool("isDarkMode") ?? false;
 
     // Static source image for all news
-    final String staticSourceImage =
-        "https://images.unsplash.com/photo-1664575602554-2087b04935a5";
-
     return SafeArea(
       child: Stack(
         children: [
@@ -193,7 +190,9 @@ class HorizontalScroll extends StatelessWidget {
                                                 ),
                                                 child: ClipOval(
                                                   child: CachedNetworkImage(
-                                                    imageUrl: staticSourceImage,
+                                                    imageUrl:
+                                                        newsModel
+                                                            .sourceImageUrl!,
                                                     width: 24,
                                                     height: 24,
                                                     fit: BoxFit.cover,

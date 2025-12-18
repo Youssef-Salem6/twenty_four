@@ -129,6 +129,7 @@ class _NewsContentState extends State<NewsContent>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
+            textAlign: TextAlign.justify,
             widget.newsDetails.title!,
             style: theme.textTheme.titleLarge?.copyWith(
               fontSize: 26,
@@ -140,7 +141,7 @@ class _NewsContentState extends State<NewsContent>
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(newsData['source_image']),
+                backgroundImage: NetworkImage(widget.newsDetails.sourceLogo!),
               ),
               const Gap(12),
               Expanded(
@@ -148,6 +149,7 @@ class _NewsContentState extends State<NewsContent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
+                      textAlign: TextAlign.justify,
                       widget.newsDetails.source!,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -172,6 +174,7 @@ class _NewsContentState extends State<NewsContent>
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Text(
+        textAlign: TextAlign.justify,
         widget.newsDetails.description!,
         style: theme.textTheme.bodyLarge?.copyWith(
           fontSize: 16,
@@ -186,8 +189,13 @@ class _NewsContentState extends State<NewsContent>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Text(
+        textAlign: TextAlign.justify,
         widget.newsDetails.body!,
-        style: theme.textTheme.bodyMedium?.copyWith(fontSize: 15, height: 1.9),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontSize: 15,
+          height: 1.9,
+          color: Colors.white,
+        ),
       ),
     );
   }

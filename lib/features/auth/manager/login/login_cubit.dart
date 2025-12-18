@@ -32,9 +32,9 @@ class LoginCubit extends Cubit<LoginState> {
   }
 
   Future<void> _saveUserData(Map data) async {
-    await prefs.setString("email", data["email"]);
-    await prefs.setString("firstName", data["name"]);
-    await prefs.setString("image", data["avatar"] ?? "");
-    await prefs.setString("token", data["access_token"]);
+    await userPref.setString("email", data["email"]);
+    await userPref.setString("firstName", data["name"]);
+    await userPref.setString("image", data["avatar"] ?? "");
+    await userPref.setString("token", data["access_token"]);
   }
 }

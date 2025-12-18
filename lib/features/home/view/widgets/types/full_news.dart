@@ -27,8 +27,6 @@ class _FullNewsState extends State<FullNews>
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    // Initialize like count from data or default
-    // _commentCount = widget.data['comments'] as int? ?? 444;
   }
 
   @override
@@ -37,19 +35,7 @@ class _FullNewsState extends State<FullNews>
     super.dispose();
   }
 
-  // void _shareNews() {
-  //   HapticFeedback.selectionClick();
-  //   showDialog(
-  //     context: context,
-  //     builder:
-  //         (context) => ShareDialog(
-  //           newsLink:
-  //               widget.data["url"] ??
-  //               "https://example.com/news/${widget.data["id"] ?? "1"}",
-  //           newsTitle: widget.data["title"] ?? "News Title",
-  //         ),
-  //   );
-  // }
+
 
   @override
   Widget build(BuildContext context) {

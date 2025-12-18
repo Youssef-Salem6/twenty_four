@@ -14,6 +14,7 @@ import 'package:twenty_four/features/splash/splash_view.dart';
 
 // Global SharedPreferences instance
 late SharedPreferences prefs;
+late SharedPreferences userPref;
 
 void main() async {
   // ضروري لتشغيل SharedPreferences قبل runApp
@@ -21,6 +22,7 @@ void main() async {
 
   // Initialize SharedPreferences globally
   prefs = await SharedPreferences.getInstance();
+  userPref = await SharedPreferences.getInstance();
 
   // فقط في المرة الأولى، قم بتعيين القيمة الافتراضية
   if (!prefs.containsKey("isDarkMode")) {
