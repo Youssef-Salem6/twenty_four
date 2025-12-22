@@ -17,7 +17,7 @@ class HomeNewsCubit extends Cubit<HomeNewsState> {
       if (response.statusCode == 200) {
         screens = jsonDecode(response.body)["data"]['screens'];
         emit(HomeNewssuccess(screens: screens));
-        print(response.body);
+        // print(response.body);
       } else {
         emit(HomeNewsFailure());
       }

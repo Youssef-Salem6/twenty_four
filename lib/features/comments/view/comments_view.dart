@@ -76,7 +76,7 @@ class _CommentsViewState extends State<CommentsView>
   Widget build(BuildContext context) {
     return BlocConsumer<GetAllCommentsCubit, GetAllCommentsState>(
       listener: (context, state) {
-        // TODO: implement listener
+        // Handle any side effects if needed
       },
       builder: (context, state) {
         // Show loading state
@@ -612,9 +612,21 @@ class _CommentsViewState extends State<CommentsView>
       child: BlocListener<AddCommentCubit, AddCommentState>(
         listener: (context, state) {
           if (state is AddCommentSuccess) {
+            // Clear the text field
+            _commentController.clear();
+
             // Refresh comments
             context.read<GetAllCommentsCubit>().getComments(
               articalId: widget.id,
+            );
+
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('تم إضافة التعليق بنجاح'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
             );
           } else if (state is AddCommentFailure) {
             // Show error
@@ -622,6 +634,7 @@ class _CommentsViewState extends State<CommentsView>
               SnackBar(
                 content: Text(state.message),
                 backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
               ),
             );
           }
@@ -691,7 +704,7 @@ class _CommentsViewState extends State<CommentsView>
                       textInputAction: TextInputAction.send,
                       onSubmitted: (value) {
                         if (value.trim().isNotEmpty) {
-                          _commentController.clear();
+                          _submitComment(context);
                         }
                       },
                     ),
@@ -709,26 +722,7 @@ class _CommentsViewState extends State<CommentsView>
                       ),
                       child: IconButton(
                         onPressed:
-                            isLoading
-                                ? null
-                                : () async {
-                                  if (prefs.getString("token") == null) {
-                                    await LoginAlert.show(context);
-                                  } else {
-                                    if (_commentController.text
-                                        .trim()
-                                        .isNotEmpty) {
-                                      context
-                                          .read<AddCommentCubit>()
-                                          .addComment(
-                                            articalId: widget.id.toString(),
-                                            comment:
-                                                _commentController.text.trim(),
-                                          );
-                                      _commentController.clear();
-                                    }
-                                  }
-                                },
+                            isLoading ? null : () => _submitComment(context),
                         icon:
                             isLoading
                                 ? const SizedBox(
@@ -758,6 +752,20 @@ class _CommentsViewState extends State<CommentsView>
     );
   }
 
+  // Helper method to avoid code duplication
+  void _submitComment(BuildContext context) async {
+    if (prefs.getString("token") == null) {
+      await LoginAlert.show(context);
+    } else {
+      if (_commentController.text.trim().isNotEmpty) {
+        BlocProvider.of<AddCommentCubit>(context).addComment(
+          articalId: widget.id.toString(),
+          comment: _commentController.text.trim(),
+        );
+      }
+    }
+  }
+
   Widget _buildAnimatedComment(Map<String, dynamic> comment, int index) {
     return TweenAnimationBuilder<double>(
       duration: Duration(milliseconds: 300 + (index * 80)),
@@ -773,7 +781,7 @@ class _CommentsViewState extends State<CommentsView>
         );
       },
       child: CommentItem(
-        userName: comment['user'] ?? 'مستخدم',
+        userName: comment['user']["name"] ?? 'مستخدم',
         comment: comment['comment'] ?? '',
         time: 'منذ ${index + 1} ${index == 0 ? "ساعة" : "ساعات"}',
         likes: index * 3,

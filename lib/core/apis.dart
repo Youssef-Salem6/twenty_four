@@ -20,3 +20,7 @@ const String logOutApi = "$endPoint/logout";
 //search
 
 String searchArticalUrl = "$getNewsDetailsUrl?search";
+
+//sources
+const String getSourcesUrl = "$endPoint/news-sources";
+String toggleFollowSourceUrl({required String sourceId}) => "$getSourcesUrl/$sourceId/toggle-follow";

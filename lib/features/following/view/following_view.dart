@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/following/manager/getSources/get_sources_cubit.dart';
+import 'package:twenty_four/features/following/manager/toggleFollow/toggle_follow_cubit.dart';
+import 'package:twenty_four/features/following/model/sources_model.dart';
 import 'package:twenty_four/main.dart';
 
 class FollowingView extends StatefulWidget {
@@ -17,14 +21,15 @@ class _FollowingViewState extends State<FollowingView>
   late AnimationController _gradientController;
   late Animation<double> _gradientAnimation;
 
-  final Map<String, bool> _followStates = {};
+  // Track which source is being toggled to show loading on specific button
+  int? _togglingSourceId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    BlocProvider.of<GetSourcesCubit>(context).getSources();
 
-    // Gradient animation for header
     _gradientController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -186,134 +191,202 @@ class _FollowingViewState extends State<FollowingView>
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildFollowingList(isDarkMode),
-          _buildRecommendationList(isDarkMode),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<ToggleFollowCubit, ToggleFollowState>(
+            listener: (context, state) {
+              if (state is ToggleFollowSuccess) {
+                // Refetch sources after successful toggle
+                context.read<GetSourcesCubit>().getSources();
+
+                // Reset toggling state
+                setState(() {
+                  _togglingSourceId = null;
+                });
+
+                // Show success message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'تم تحديث المتابعة بنجاح',
+                      style: TextStyle(fontFamily: "Almarai"),
+                    ),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              } else if (state is ToggleFollowFailure) {
+                // Reset toggling state
+                setState(() {
+                  _togglingSourceId = null;
+                });
+
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'فشل تحديث المتابعة، حاول مرة أخرى',
+                      style: TextStyle(fontFamily: "Almarai"),
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
         ],
+        child: BlocBuilder<GetSourcesCubit, GetSourcesState>(
+          builder: (context, state) {
+            if (state is GetSourcesLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+              );
+            } else if (state is GetSourcesFailure) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: Colors.red.withOpacity(0.6),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'فشل تحميل المصادر',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: AppThemes.getTextColor(isDarkMode),
+                        fontFamily: "Almarai",
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<GetSourcesCubit>().getSources();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text(
+                        'إعادة المحاولة',
+                        style: TextStyle(fontFamily: "Almarai"),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else if (state is GetSourcesSuccess) {
+              // Parse sources into SourcesModel
+              final sources =
+                  state.sources
+                      .map((json) => SourcesModel.fromJson(json))
+                      .toList();
+
+              // Separate following and recommendations
+              final followingSources =
+                  sources.where((s) => s.isFollowing == true).toList();
+              final recommendedSources =
+                  sources.where((s) => s.isFollowing == false).toList();
+
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildSourcesList(followingSources, isDarkMode),
+                  _buildSourcesList(recommendedSources, isDarkMode),
+                ],
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildFollowingList(bool isDarkMode) {
-    final followingList = [
-      {
-        'name': 'الجزيرة',
-        'logo': 'https://images.unsplash.com/photo-1679678691006-0ad24fecb769',
-        'isFollowing': true,
-      },
-      {
-        'name': 'العربية',
-        'logo': 'https://images.unsplash.com/photo-1679678691250-a14e09c004c7',
-        'isFollowing': true,
-      },
-      {
-        'name': 'سكاي نيوز',
-        'logo': 'https://images.unsplash.com/photo-1679678691170-7781f11f9d86',
-        'isFollowing': true,
-      },
-      {
-        'name': 'بي بي سي عربي',
-        'logo': 'https://images.unsplash.com/photo-1679678691328-54929d271c3c',
-        'isFollowing': true,
-      },
-    ];
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: followingList.length,
-      itemBuilder: (context, index) {
-        return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: Duration(milliseconds: 400 + (index * 100)),
-          curve: Curves.easeOut,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(50 * (1 - value), 0),
-              child: Opacity(
-                opacity: value,
-                child: _buildSourceCard(
-                  name: followingList[index]['name'] as String,
-                  logoUrl: followingList[index]['logo'] as String,
-                  isFollowing: followingList[index]['isFollowing'] as bool,
-                  isDarkMode: isDarkMode,
-                  index: index,
-                ),
+  Widget _buildSourcesList(List<SourcesModel> sources, bool isDarkMode) {
+    if (sources.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.newspaper_outlined,
+              size: 80,
+              color: Colors.grey.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'لا توجد مصادر',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontFamily: "Almarai",
               ),
-            );
-          },
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    }
 
-  Widget _buildRecommendationList(bool isDarkMode) {
-    final recommendationList = [
-      {
-        'name': 'CNN عربية',
-        'logo': 'https://images.unsplash.com/photo-1664575602554-2087b04935a5',
-        'isFollowing': false,
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<GetSourcesCubit>().getSources();
       },
-      {
-        'name': 'رويترز',
-        'logo': 'https://images.unsplash.com/photo-1679678691006-0ad24fecb769',
-        'isFollowing': false,
-      },
-      {
-        'name': 'فرانس 24',
-        'logo': 'https://images.unsplash.com/photo-1679678691250-a14e09c004c7',
-        'isFollowing': false,
-      },
-      {
-        'name': 'الشرق الأوسط',
-        'logo': 'https://images.unsplash.com/photo-1679678691170-7781f11f9d86',
-        'isFollowing': false,
-      },
-      {
-        'name': 'الاهرام',
-        'logo': 'https://images.unsplash.com/photo-1679678691328-54929d271c3c',
-        'isFollowing': false,
-      },
-    ];
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: recommendationList.length,
-      itemBuilder: (context, index) {
-        return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: Duration(milliseconds: 400 + (index * 100)),
-          curve: Curves.easeOut,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(50 * (1 - value), 0),
-              child: Opacity(
-                opacity: value,
-                child: _buildSourceCard(
-                  name: recommendationList[index]['name'] as String,
-                  logoUrl: recommendationList[index]['logo'] as String,
-                  isFollowing: recommendationList[index]['isFollowing'] as bool,
-                  isDarkMode: isDarkMode,
-                  index: index,
+      color: Colors.blue,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: sources.length,
+        itemBuilder: (context, index) {
+          final source = sources[index];
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: Duration(milliseconds: 400 + (index * 100)),
+            curve: Curves.easeOut,
+            builder: (context, value, child) {
+              return Transform.translate(
+                offset: Offset(50 * (1 - value), 0),
+                child: Opacity(
+                  opacity: value,
+                  child: _buildSourceCard(
+                    source: source,
+                    isDarkMode: isDarkMode,
+                    index: index,
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
   Widget _buildSourceCard({
-    required String name,
-    required String logoUrl,
-    required bool isFollowing,
+    required SourcesModel source,
     required bool isDarkMode,
     required int index,
   }) {
-    final key = '$name-$index';
-    final currentState = _followStates[key] ?? isFollowing;
+    final isFollowing = source.isFollowing ?? false;
+    final isToggling = _togglingSourceId == source.id;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -333,7 +406,6 @@ class _FollowingViewState extends State<FollowingView>
       ),
       child: Row(
         children: [
-          // Animated logo
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 600),
@@ -342,7 +414,7 @@ class _FollowingViewState extends State<FollowingView>
               return Transform.scale(
                 scale: value,
                 child: Hero(
-                  tag: 'logo-$name-$index',
+                  tag: 'logo-${source.name}-$index',
                   child: Container(
                     width: 60,
                     height: 60,
@@ -368,7 +440,7 @@ class _FollowingViewState extends State<FollowingView>
                     ),
                     child: ClipOval(
                       child: CachedNetworkImage(
-                        imageUrl: logoUrl,
+                        imageUrl: source.logo ?? '',
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
@@ -410,7 +482,6 @@ class _FollowingViewState extends State<FollowingView>
             },
           ),
           const SizedBox(width: 16),
-          // Name with fade in
           Expanded(
             child: TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
@@ -420,7 +491,7 @@ class _FollowingViewState extends State<FollowingView>
                 return Opacity(
                   opacity: value,
                   child: Text(
-                    name,
+                    source.name ?? 'Unknown',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -433,7 +504,6 @@ class _FollowingViewState extends State<FollowingView>
             ),
           ),
           const SizedBox(width: 12),
-          // Animated follow button
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.8, end: 1.0),
             duration: const Duration(milliseconds: 400),
@@ -444,23 +514,31 @@ class _FollowingViewState extends State<FollowingView>
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _followStates[key] = !currentState;
-                      });
-                    },
+                    onPressed:
+                        isToggling
+                            ? null
+                            : () {
+                              if (source.id != null) {
+                                setState(() {
+                                  _togglingSourceId = source.id;
+                                });
+                                context
+                                    .read<ToggleFollowCubit>()
+                                    .toggleFollowSource(sourceId: source.id!);
+                              }
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
-                          currentState
+                          isFollowing
                               ? (isDarkMode
                                   ? Colors.grey.shade800
                                   : Colors.grey.shade200)
                               : Colors.blue,
                       foregroundColor:
-                          currentState
+                          isFollowing
                               ? AppThemes.getTextColor(isDarkMode)
                               : Colors.white,
-                      elevation: currentState ? 0 : 4,
+                      elevation: isFollowing ? 0 : 4,
                       shadowColor: Colors.blue.withOpacity(0.4),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -469,27 +547,47 @@ class _FollowingViewState extends State<FollowingView>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      disabledBackgroundColor:
+                          isFollowing
+                              ? (isDarkMode
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade200)
+                              : Colors.blue.shade300,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (child, animation) {
-                            return ScaleTransition(
-                              scale: animation,
-                              child: child,
-                            );
-                          },
-                          child: Icon(
-                            currentState ? Icons.check : Icons.add,
-                            key: ValueKey(currentState),
-                            size: 18,
+                        if (isToggling)
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isFollowing
+                                    ? AppThemes.getTextColor(isDarkMode)
+                                    : Colors.white,
+                              ),
+                            ),
+                          )
+                        else
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                scale: animation,
+                                child: child,
+                              );
+                            },
+                            child: Icon(
+                              isFollowing ? Icons.check : Icons.add,
+                              key: ValueKey(isFollowing),
+                              size: 18,
+                            ),
                           ),
-                        ),
                         const SizedBox(width: 6),
                         Text(
-                          currentState ? 'متابَع' : 'متابعة',
+                          isFollowing ? 'متابَع' : 'متابعة',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
@@ -508,3 +606,5 @@ class _FollowingViewState extends State<FollowingView>
     );
   }
 }
+
+// SourcesModel class

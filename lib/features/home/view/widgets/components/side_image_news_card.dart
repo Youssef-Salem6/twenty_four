@@ -136,7 +136,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                     ),
                     const SizedBox(width: 12),
                     SizedBox(
-                      width: 150,
+                      width: 120,
                       child: Stack(
                         children: [
                           ClipRRect(

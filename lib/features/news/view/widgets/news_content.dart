@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:gap/gap.dart';
 import 'package:twenty_four/features/comments/view/comments_view.dart';
 import 'package:twenty_four/features/news/models/news_details_model.dart';
-import 'package:twenty_four/features/news/view/widgets/ai_summary_view.dart';
+// import 'package:twenty_four/features/news/view/widgets/ai_summary_view.dart';
 import 'package:twenty_four/features/news/view/widgets/faq_view.dart';
 import 'package:twenty_four/features/webView/web_view.dart';
 import 'package:twenty_four/main.dart';
@@ -75,7 +76,7 @@ class _NewsContentState extends State<NewsContent>
               children: [
                 _buildTitleAndSource(theme, newsData),
                 Divider(height: 1, color: theme.dividerColor),
-                _buildDescription(theme),
+                // _buildDescription(theme),
                 _buildBodyContent(theme),
                 const Gap(30),
                 Row(
@@ -98,17 +99,17 @@ class _NewsContentState extends State<NewsContent>
                   ],
                 ),
                 const Gap(30),
-                // عرض AI Summary فقط إذا كان موجوداً
-                if (widget.newsDetails.geminiSummary != null &&
-                    widget.newsDetails.geminiSummary!.isNotEmpty)
-                  AiSummaryView(
-                    summary: widget.newsDetails.geminiSummary!,
-                    isDarkMode: widget.isDarkMode,
-                  ),
+                // // عرض AI Summary فقط إذا كان موجوداً
+                // if (widget.newsDetails.geminiSummary != null &&
+                //     widget.newsDetails.geminiSummary!.isNotEmpty)
+                //   AiSummaryView(
+                //     summary: widget.newsDetails.geminiSummary!,
+                //     isDarkMode: widget.isDarkMode,
+                //   ),
 
-                if (widget.newsDetails.geminiSummary != null &&
-                    widget.newsDetails.geminiSummary!.isNotEmpty)
-                  const Gap(30),
+                // if (widget.newsDetails.geminiSummary != null &&
+                //     widget.newsDetails.geminiSummary!.isNotEmpty)
+                //   const Gap(30),
 
                 // عرض FAQ فقط إذا كان موجوداً
                 if (widget.newsDetails.faqs != null &&
@@ -190,33 +191,31 @@ class _NewsContentState extends State<NewsContent>
     );
   }
 
-  Widget _buildDescription(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Text(
-        textAlign: TextAlign.justify,
-        widget.newsDetails.description!,
-        style: theme.textTheme.bodyLarge?.copyWith(
-          fontSize: 16,
-          height: 1.8,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
   Widget _buildBodyContent(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Text(
-        maxLines: 10,
-        textAlign: TextAlign.justify,
-        widget.newsDetails.body!,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontSize: 15,
-          height: 1.9,
-          color: Colors.white,
-        ),
+      child: Html(
+        data: widget.newsDetails.geminiSummary!,
+        style: {
+          "body": Style(
+            fontSize: FontSize(15),
+            lineHeight: LineHeight(1.9),
+            color: Colors.white,
+            textAlign: TextAlign.justify,
+            margin: Margins.zero,
+            padding: HtmlPaddings.zero,
+          ),
+          "p": Style(margin: Margins.only(bottom: 12)),
+          "h1, h2, h3, h4, h5, h6": Style(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+          "a": Style(
+            color: Colors.blue[300],
+            textDecoration: TextDecoration.underline,
+          ),
+          "ul, ol": Style(margin: Margins.only(left: 16, bottom: 12)),
+        },
       ),
     );
   }

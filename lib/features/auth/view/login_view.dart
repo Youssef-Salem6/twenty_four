@@ -51,7 +51,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
 
     _animationController.forward();
 
-    // Gradient animation controller
     _gradientController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -61,7 +60,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       CurvedAnimation(parent: _gradientController, curve: Curves.easeInOut),
     );
 
-    // Start gradient animation once (non-repeating)
     _gradientController.forward();
   }
 
@@ -75,7 +73,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   }
 
   void _handleLogin(BuildContext context) {
-    // Validation
     if (_emailController.text.trim().isEmpty) {
       _showSnackBar(context, 'الرجاء إدخال البريد الإلكتروني', Colors.orange);
       return;
@@ -85,7 +82,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       return;
     }
 
-    // Call login
     context.read<LoginCubit>().login(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
@@ -111,27 +107,22 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       child: BlocConsumer<LoginCubit, LoginState>(
         listener: (context, state) {
           if (state is LoginSuccess) {
-            // Close loading dialog if exists
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-
             _showSnackBar(context, state.message, Colors.green);
 
-            // Navigate to NavBar
-            Future.delayed(const Duration(milliseconds: 500), () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const NavBar()),
-                (route) => false,
-              );
-            });
-          } else if (state is LoginFailure) {
-            // Close loading dialog if exists
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+            // FIX: Check if widget is still mounted before navigating
+            if (mounted) {
+              // Use WidgetsBinding to ensure navigation happens after frame
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NavBar()),
+                    (route) => false,
+                  );
+                }
+              });
             }
-
+          } else if (state is LoginFailure) {
             _showSnackBar(context, state.message, Colors.red);
           }
         },
@@ -141,7 +132,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             child: Scaffold(
               body: Stack(
                 children: [
-                  // Main content
                   AnimatedBuilder(
                     animation: _gradientAnimation,
                     builder: (context, child) {
@@ -179,7 +169,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  // Logo with pulse animation
                                   TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0.8, end: 1.0),
                                     duration: const Duration(milliseconds: 800),
@@ -200,9 +189,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                             ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.blue.withOpacity(
-                                                  0.3,
-                                                ),
+                                                color: Colors.blue.withOpacity(0.3),
                                                 blurRadius: 20,
                                                 spreadRadius: 5,
                                               ),
@@ -218,8 +205,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     },
                                   ),
                                   const SizedBox(height: 40),
-
-                                  // Welcome Text
                                   const Text(
                                     'مرحباً بعودتك',
                                     textAlign: TextAlign.center,
@@ -241,8 +226,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   const SizedBox(height: 50),
-
-                                  // Email Field
                                   _buildTextField(
                                     controller: _emailController,
                                     hintText: 'البريد الإلكتروني',
@@ -250,8 +233,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   const SizedBox(height: 20),
-
-                                  // Password Field
                                   _buildTextField(
                                     controller: _passwordController,
                                     hintText: 'كلمة المرور',
@@ -259,8 +240,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     isPassword: true,
                                   ),
                                   const SizedBox(height: 12),
-
-                                  // Forgot Password
                                   Align(
                                     alignment: Alignment.centerLeft,
                                     child: TextButton(
@@ -281,12 +260,8 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   const SizedBox(height: 30),
-
-                                  // Login Button
                                   _buildLoginButton(context, state),
                                   const SizedBox(height: 30),
-
-                                  // Divider
                                   Row(
                                     children: [
                                       Expanded(
@@ -296,15 +271,11 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                         ),
                                       ),
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
                                         child: Text(
                                           'أو',
                                           style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.6,
-                                            ),
+                                            color: Colors.white.withOpacity(0.6),
                                             fontFamily: 'Almarai',
                                           ),
                                         ),
@@ -318,12 +289,8 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     ],
                                   ),
                                   const SizedBox(height: 30),
-
-                                  // Google Login Button
                                   _buildGoogleButton(),
                                   const SizedBox(height: 30),
-
-                                  // Sign Up Link
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -339,9 +306,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      const RegisterView(),
+                                              builder: (context) => const RegisterView(),
                                             ),
                                           );
                                         },
@@ -364,8 +329,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-
-                  // Loading overlay
                   if (state is LoginLoading)
                     Container(
                       color: Colors.black54,
@@ -443,22 +406,19 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
             fontFamily: 'Almarai',
           ),
           prefixIcon: Icon(icon, color: Colors.blue.shade300),
-          suffixIcon:
-              isPassword
-                  ? IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  )
-                  : null,
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                )
+              : null,
           filled: true,
           fillColor: Colors.white.withOpacity(0.1),
           border: OutlineInputBorder(
@@ -489,10 +449,9 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors:
-              isLoading
-                  ? [Colors.grey.shade400, Colors.grey.shade600]
-                  : [Colors.blue.shade400, Colors.blue.shade700],
+          colors: isLoading
+              ? [Colors.grey.shade400, Colors.grey.shade600]
+              : [Colors.blue.shade400, Colors.blue.shade700],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -509,25 +468,24 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
           onTap: isLoading ? null : () => _handleLogin(context),
           borderRadius: BorderRadius.circular(16),
           child: Center(
-            child:
-                isLoading
-                    ? const SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                    : const Text(
-                      'تسجيل الدخول',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Almarai',
-                      ),
+            child: isLoading
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
                     ),
+                  )
+                : const Text(
+                    'تسجيل الدخول',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Almarai',
+                    ),
+                  ),
           ),
         ),
       ),

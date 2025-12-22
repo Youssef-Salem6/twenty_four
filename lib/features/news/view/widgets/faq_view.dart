@@ -24,23 +24,6 @@ class _FaqViewState extends State<FaqView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            children: [
-              Icon(Icons.help_outline_rounded, color: Colors.blue, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'الأسئلة الشائعة',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppThemes.getTextColor(widget.isDarkMode),
-                ),
-              ),
-            ],
-          ),
-        ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),

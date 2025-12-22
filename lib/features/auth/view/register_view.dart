@@ -54,7 +54,6 @@ class _RegisterViewState extends State<RegisterView>
 
     _animationController.forward();
 
-    // Gradient animation controller
     _gradientController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -64,7 +63,6 @@ class _RegisterViewState extends State<RegisterView>
       CurvedAnimation(parent: _gradientController, curve: Curves.easeInOut),
     );
 
-    // Start gradient animation once (non-repeating)
     _gradientController.forward();
   }
 
@@ -80,7 +78,6 @@ class _RegisterViewState extends State<RegisterView>
   }
 
   void _handleRegister(BuildContext context) {
-    // Validation
     if (_nameController.text.trim().isEmpty) {
       _showSnackBar(context, 'الرجاء إدخال الاسم الكامل', Colors.orange);
       return;
@@ -103,7 +100,6 @@ class _RegisterViewState extends State<RegisterView>
       return;
     }
 
-    // Call register
     context.read<RegisterCubit>().register(
       body: {
         "name": _nameController.text.trim(),
@@ -133,23 +129,21 @@ class _RegisterViewState extends State<RegisterView>
       child: BlocConsumer<RegisterCubit, RegisterState>(
         listener: (context, state) {
           if (state is RegisterSuccess) {
-            // Close loading dialog if exists
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const NavBar()),
-              (route) => false,
-            );
-
             _showSnackBar(context, state.message, Colors.green);
-          } else if (state is RegisterFailure) {
-            // Close loading dialog if exists
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
 
+            // FIX: Safe navigation with mounted check
+            if (mounted) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NavBar()),
+                    (route) => false,
+                  );
+                }
+              });
+            }
+          } else if (state is RegisterFailure) {
             _showSnackBar(context, state.message, Colors.red);
           }
         },
@@ -159,7 +153,6 @@ class _RegisterViewState extends State<RegisterView>
             child: Scaffold(
               body: Stack(
                 children: [
-                  // Main content
                   AnimatedBuilder(
                     animation: _gradientAnimation,
                     builder: (context, child) {
@@ -208,8 +201,6 @@ class _RegisterViewState extends State<RegisterView>
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   const SizedBox(height: 20),
-
-                                  // Logo with pulse animation
                                   TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0.8, end: 1.0),
                                     duration: const Duration(milliseconds: 800),
@@ -248,8 +239,6 @@ class _RegisterViewState extends State<RegisterView>
                                     },
                                   ),
                                   const SizedBox(height: 30),
-
-                                  // Welcome Text
                                   const Text(
                                     'إنشاء حساب جديد',
                                     textAlign: TextAlign.center,
@@ -271,8 +260,6 @@ class _RegisterViewState extends State<RegisterView>
                                     ),
                                   ),
                                   const SizedBox(height: 40),
-
-                                  // Name Field
                                   _buildTextField(
                                     controller: _nameController,
                                     hintText: 'الاسم الكامل',
@@ -280,8 +267,6 @@ class _RegisterViewState extends State<RegisterView>
                                     keyboardType: TextInputType.name,
                                   ),
                                   const SizedBox(height: 16),
-
-                                  // Email Field
                                   _buildTextField(
                                     controller: _emailController,
                                     hintText: 'البريد الإلكتروني',
@@ -289,8 +274,6 @@ class _RegisterViewState extends State<RegisterView>
                                     keyboardType: TextInputType.emailAddress,
                                   ),
                                   const SizedBox(height: 16),
-
-                                  // Password Field
                                   _buildTextField(
                                     controller: _passwordController,
                                     hintText: 'كلمة المرور',
@@ -304,8 +287,6 @@ class _RegisterViewState extends State<RegisterView>
                                     },
                                   ),
                                   const SizedBox(height: 16),
-
-                                  // Confirm Password Field
                                   _buildTextField(
                                     controller: _confirmPasswordController,
                                     hintText: 'تأكيد كلمة المرور',
@@ -320,12 +301,8 @@ class _RegisterViewState extends State<RegisterView>
                                     },
                                   ),
                                   const SizedBox(height: 30),
-
-                                  // Register Button
                                   _buildRegisterButton(context, state),
                                   const SizedBox(height: 30),
-
-                                  // Divider
                                   Row(
                                     children: [
                                       Expanded(
@@ -357,12 +334,8 @@ class _RegisterViewState extends State<RegisterView>
                                     ],
                                   ),
                                   const SizedBox(height: 30),
-
-                                  // Google Register Button
                                   _buildGoogleButton(),
                                   const SizedBox(height: 30),
-
-                                  // Login Link
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -397,8 +370,6 @@ class _RegisterViewState extends State<RegisterView>
                       ),
                     ),
                   ),
-
-                  // Loading overlay
                   if (state is RegisterLoading)
                     Container(
                       color: Colors.black54,
@@ -581,7 +552,6 @@ class _RegisterViewState extends State<RegisterView>
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Add Google registration logic here
             _showSnackBar(context, 'التسجيل بجوجل قريباً', Colors.blue);
           },
           borderRadius: BorderRadius.circular(16),
