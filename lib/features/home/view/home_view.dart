@@ -43,6 +43,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     BlocProvider.of<HomeNewsCubit>(context).getHomeNews();
+    
     // Initialize animation controllers
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 600),
@@ -85,6 +86,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     _fadeController.reset();
     _scaleController.reset();
     _startAnimations();
+  }
+
+  // Check if we need to load more news
+  void _checkAndLoadMore(int currentIndex) {
+    final cubit = BlocProvider.of<HomeNewsCubit>(context);
+    final totalScreens = cubit.screens.length;
+    
+    // Load more when we're 3 pages away from the end
+    if (currentIndex >= totalScreens - 3 && cubit.hasMoreData && !cubit.isLoadingMore) {
+      print("Loading more news - Current: $currentIndex, Total: $totalScreens");
+      cubit.loadMoreNews();
+    }
   }
 
   @override
@@ -169,12 +182,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
               margin: const EdgeInsets.symmetric(horizontal: 12),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
-                border:
-                    isSelected
-                        ? Border(
-                          bottom: BorderSide(color: Colors.red, width: 3),
-                        )
-                        : null,
+                border: isSelected
+                    ? Border(
+                        bottom: BorderSide(color: Colors.red, width: 3),
+                      )
+                    : null,
               ),
               child: Center(
                 child: Text(
@@ -182,10 +194,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color:
-                        isSelected
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.6),
+                    color: isSelected
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -393,70 +404,74 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                         ),
                       );
                     },
-                    child:
-                        currentPage == 0
-                            ? Container(
-                              key: ValueKey('categories'),
-                              color: Colors.transparent,
-                              child: Row(
-                                children: [
-                                  // Logo section
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 16,
-                                      right: 8,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/images/logo.png',
-                                      width: 80,
-                                      height: 30,
-                                      fit: BoxFit.contain,
-                                    ),
+                    child: currentPage == 0
+                        ? Container(
+                            key: ValueKey('categories'),
+                            color: Colors.transparent,
+                            child: Row(
+                              children: [
+                                // Logo section
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 16,
+                                    right: 8,
                                   ),
-                                  // Categories list
-                                  Expanded(child: _buildCategoriesList()),
-                                ],
-                              ),
-                            )
-                            : Container(
-                              key: ValueKey('back'),
-                              color: Colors.transparent,
-                              alignment: Alignment.centerRight,
-                              child: _buildBackHeader(),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 80,
+                                    height: 30,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                // Categories list
+                                Expanded(child: _buildCategoriesList()),
+                              ],
                             ),
+                          )
+                        : Container(
+                            key: ValueKey('back'),
+                            color: Colors.transparent,
+                            alignment: Alignment.centerRight,
+                            child: _buildBackHeader(),
+                          ),
                   ),
                 ),
               ),
             ),
           ),
-          body:
-              state is HomeNewsLoading
-                  ? _buildLoadingState()
-                  : state is HomeNewsFailure
+          body: state is HomeNewsLoading
+              ? _buildLoadingState()
+              : state is HomeNewsFailure
                   ? _buildErrorState()
                   : state is HomeNewssuccess &&
-                      BlocProvider.of<HomeNewsCubit>(context).screens.isEmpty
-                  ? _buildEmptyState()
-                  : PageView.builder(
-                    controller: pageController,
-                    scrollDirection: Axis.vertical,
-                    onPageChanged: (index) {
-                      setState(() {
-                        currentPage = index;
-                      });
-                      _resetAndStartAnimations();
-                      HapticFeedback.mediumImpact();
-                    },
-                    itemBuilder: (context, index) {
-                      return SizedBox(
-                        width: size.width,
-                        height: size.height,
-                        child: _buildAnimatedPage(index),
-                      );
-                    },
-                    itemCount:
-                        BlocProvider.of<HomeNewsCubit>(context).screens.length,
-                  ),
+                          BlocProvider.of<HomeNewsCubit>(context)
+                              .screens
+                              .isEmpty
+                      ? _buildEmptyState()
+                      : PageView.builder(
+                          controller: pageController,
+                          scrollDirection: Axis.vertical,
+                          onPageChanged: (index) {
+                            setState(() {
+                              currentPage = index;
+                            });
+                            _resetAndStartAnimations();
+                            HapticFeedback.mediumImpact();
+                            
+                            // Check if we need to load more data
+                            _checkAndLoadMore(index);
+                          },
+                          itemBuilder: (context, index) {
+                            return SizedBox(
+                              width: size.width,
+                              height: size.height,
+                              child: _buildAnimatedPage(index),
+                            );
+                          },
+                          itemCount: BlocProvider.of<HomeNewsCubit>(context)
+                              .screens
+                              .length,
+                        ),
         );
       },
     );
