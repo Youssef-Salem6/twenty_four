@@ -52,7 +52,7 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                 color: AppThemes.getCardColor(isDarkMode),
               ),
               height:
-                  widget.fromSearch ? size.height * 0.2 : size.height * 0.25,
+                  widget.fromSearch ? size.height * 0.2 : size.height * 0.24,
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Row(
@@ -116,17 +116,12 @@ class _SideImageNewsCardState extends State<SideImageNewsCard> {
                                   ),
                                 ],
                               ),
-                              Spacer(),
+                              // Spacer(),
                               Image(
                                 image: AssetImage(
                                   "assets/images/icons/generative (1).png",
                                 ),
                                 width: 25,
-                                color: AppThemes.getIconColor(isDarkMode),
-                              ),
-                              Icon(
-                                Icons.more_vert,
-                                size: 25,
                                 color: AppThemes.getIconColor(isDarkMode),
                               ),
                             ],

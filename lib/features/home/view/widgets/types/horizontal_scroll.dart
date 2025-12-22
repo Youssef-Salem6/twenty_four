@@ -91,7 +91,7 @@ class HorizontalScroll extends StatelessWidget {
                           },
                           child: Container(
                             width: size.width * 0.75,
-                            height: size.height * 0.5,
+                            height: size.height * 0.48,
                             decoration: BoxDecoration(
                               color: AppThemes.getCardColor(isDarkMode),
                               boxShadow: [

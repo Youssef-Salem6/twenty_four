@@ -197,11 +197,11 @@ class MainType extends StatelessWidget {
                                   ),
                                   width: 28,
                                 ),
-                                Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
+                                // Icon(
+                                //   Icons.more_vert,
+                                //   color: Colors.white,
+                                //   size: 28,
+                                // ),
                               ],
                             ),
                             Gap(10),

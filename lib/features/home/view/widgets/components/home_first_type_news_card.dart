@@ -225,11 +225,11 @@ class HomeFirstTypeNewsCard extends StatelessWidget {
                             width: 30,
                             color: AppThemes.getIconColor(isDarkMode),
                           ),
-                          Icon(
-                            Icons.more_vert,
-                            size: 24,
-                            color: AppThemes.getIconColor(isDarkMode),
-                          ),
+                          // Icon(
+                          //   Icons.more_vert,
+                          //   size: 24,
+                          //   color: AppThemes.getIconColor(isDarkMode),
+                          // ),
                         ],
                       ),
                     ],
