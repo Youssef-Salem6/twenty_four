@@ -3,7 +3,7 @@ import 'package:twenty_four/main.dart';
 const String endPoint = "https://new.the24.net/api/cp";
 
 Map<String, String> headers = {
-  'Authorization': 'Bearer ${prefs.getString("token")}',
+  'Authorization': 'Bearer ${userPref.getString("token")}',
   "Accept": "application/json",
 };
 //home news
@@ -23,4 +23,5 @@ String searchArticalUrl = "$getNewsDetailsUrl?search";
 
 //sources
 const String getSourcesUrl = "$endPoint/news-sources";
-String toggleFollowSourceUrl({required String sourceId}) => "$getSourcesUrl/$sourceId/toggle-follow";
+String toggleFollowSourceUrl({required String sourceId}) =>
+    "$getSourcesUrl/$sourceId/toggle-follow";

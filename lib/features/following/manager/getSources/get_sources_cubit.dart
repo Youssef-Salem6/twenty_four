@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:meta/meta.dart';
 import 'package:http/http.dart' as http;
 import 'package:twenty_four/core/apis.dart';
+import 'package:twenty_four/main.dart';
 part 'get_sources_state.dart';
 
 class GetSourcesCubit extends Cubit<GetSourcesState> {
@@ -14,7 +15,10 @@ class GetSourcesCubit extends Cubit<GetSourcesState> {
     try {
       final response = await http.get(
         Uri.parse(getSourcesUrl),
-        headers: headers,
+        headers: {
+          'Authorization': 'Bearer ${userPref.getString("token")}',
+          "Accept": "application/json",
+        },
       );
       if (response.statusCode == 200) {
         sources = jsonDecode(response.body)["data"]["news_sources"];
