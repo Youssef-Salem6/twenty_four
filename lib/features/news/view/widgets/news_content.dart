@@ -195,7 +195,7 @@ class _NewsContentState extends State<NewsContent>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Html(
-        data: widget.newsDetails.geminiSummary!,
+        data: widget.newsDetails.description ?? "<p>لا يوجد محتوى لعرضه.</p>",
         style: {
           "body": Style(
             fontSize: FontSize(15),

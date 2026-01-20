@@ -8,6 +8,9 @@ import 'package:twenty_four/features/home/view/widgets/types/horizontal_scroll.d
 import 'package:twenty_four/features/home/view/widgets/types/main_type.dart';
 import 'package:twenty_four/features/home/view/widgets/types/three_news_card.dart';
 import 'package:twenty_four/main.dart';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -19,10 +22,10 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   PageController pageController = PageController();
   int currentPage = 0;
-  double pageOffset = 0.0;
+  int nextPage = 1;
   int selectedCategoryIndex = 0;
+  bool _isFlippingUp = true; // Track flip direction
 
-  // Categories list
   final List<String> categories = [
     'سياسة',
     'رياضة',
@@ -32,83 +35,125 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     'عالمية',
   ];
 
-  // Animation controllers
-  late AnimationController _fadeController;
-  late AnimationController _scaleController;
-
-  late Animation<double> _fadeAnimation;
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
   late Animation<double> _scaleAnimation;
+
+  final GlobalKey _currentPageKey = GlobalKey();
+  final GlobalKey _nextPageKey = GlobalKey();
+  ui.Image? _currentPageImage;
+  ui.Image? _nextPageImage;
+  bool _isCapturing = false;
 
   @override
   void initState() {
     super.initState();
     BlocProvider.of<HomeNewsCubit>(context).getHomeNews();
-    
-    // Initialize animation controllers
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+
+    _flipController = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
+    _flipAnimation = CurvedAnimation(
+      parent: _flipController,
+      curve: Curves.easeInOut,
     );
 
-    // Initialize animations
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeOutBack),
-    );
-
-    // Add page controller listener
-    pageController.addListener(() {
-      if (pageController.page != null) {
-        setState(() {
-          pageOffset = pageController.page!;
-        });
-      }
-    });
-
-    // Start initial animations
-    _startAnimations();
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 20),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.0,
+          end: 0.95,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 0.95,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 20),
+    ]).animate(_flipController);
   }
 
-  void _startAnimations() {
-    _fadeController.forward();
-    _scaleController.forward();
-  }
-
-  void _resetAndStartAnimations() {
-    _fadeController.reset();
-    _scaleController.reset();
-    _startAnimations();
-  }
-
-  // Check if we need to load more news
   void _checkAndLoadMore(int currentIndex) {
     final cubit = BlocProvider.of<HomeNewsCubit>(context);
     final totalScreens = cubit.screens.length;
-    
-    // Load more when we're 3 pages away from the end
-    if (currentIndex >= totalScreens - 3 && cubit.hasMoreData && !cubit.isLoadingMore) {
+
+    if (currentIndex >= totalScreens - 3 &&
+        cubit.hasMoreData &&
+        !cubit.isLoadingMore) {
       print("Loading more news - Current: $currentIndex, Total: $totalScreens");
       cubit.loadMoreNews();
+    }
+  }
+
+  Future<ui.Image?> _captureWidget(GlobalKey key) async {
+    try {
+      RenderRepaintBoundary? boundary =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) return null;
+
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      return image;
+    } catch (e) {
+      print('Error capturing widget: $e');
+      return null;
+    }
+  }
+
+  Future<void> _prepareFlipAnimation(int direction) async {
+    if (_isCapturing) return;
+
+    setState(() {
+      _isCapturing = true;
+      nextPage = currentPage + direction;
+      _isFlippingUp = direction > 0; // true for next page, false for previous
+    });
+
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    _currentPageImage = await _captureWidget(_currentPageKey);
+    _nextPageImage = await _captureWidget(_nextPageKey);
+
+    setState(() {
+      _isCapturing = false;
+    });
+
+    if (_currentPageImage != null && _nextPageImage != null) {
+      _flipController.forward(from: 0).then((_) {
+        setState(() {
+          currentPage = nextPage;
+          _currentPageImage = null;
+          _nextPageImage = null;
+        });
+        _flipController.reset();
+        _checkAndLoadMore(currentPage);
+      });
+      HapticFeedback.mediumImpact();
     }
   }
 
   @override
   void dispose() {
     pageController.dispose();
-    _fadeController.dispose();
-    _scaleController.dispose();
+    _flipController.dispose();
+    _currentPageImage?.dispose();
+    _nextPageImage?.dispose();
     super.dispose();
   }
 
-  Widget _buildPage(int type, {required List data}) {
+  Widget _buildPage(
+    int type, {
+    required List data,
+    required int id,
+    required String title,
+    required String description,
+  }) {
     if (type == 1) {
       return MainType(data: data);
     } else if (type == 2) {
@@ -116,49 +161,265 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     } else if (type == 4) {
       return FullNews(data: data[0]);
     } else if (type == 3) {
-      return HorizontalScroll(news: data);
+      return HorizontalScroll(
+        news: data,
+        description: description,
+        title: title,
+        id: id,
+      );
     } else {
       return MainType(data: data);
     }
   }
 
-  Widget _buildAnimatedPage(int index) {
-    // Calculate the page's position relative to current page
-    double pagePosition = (index - pageOffset).clamp(-1.0, 1.0);
+  Widget _buildFlipPage() {
+    final cubit = BlocProvider.of<HomeNewsCubit>(context);
+    List data = cubit.screens;
 
-    // Calculate transform values safely
-    double scale = (1 - (pagePosition.abs() * 0.1)).clamp(0.8, 1.0);
-    double opacity = (1 - pagePosition.abs()).clamp(0.0, 1.0);
-    double horizontalMargin = (pagePosition.abs() * 15).clamp(0.0, 30.0);
-    double verticalMargin = (pagePosition.abs() * 8).clamp(0.0, 15.0);
+    if (data.isEmpty || currentPage >= data.length) {
+      return const SizedBox.shrink();
+    }
 
-    return AnimatedBuilder(
-      animation: Listenable.merge([_fadeAnimation, _scaleAnimation]),
-      builder: (context, child) {
-        List data = BlocProvider.of<HomeNewsCubit>(context).screens;
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            margin: EdgeInsets.symmetric(
-              horizontal: horizontalMargin,
-              vertical: verticalMargin,
-            ),
-            child: Opacity(
-              opacity: opacity,
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: _buildPage(
-                    data[index]["screen_type"],
-                    data: data[index]["news"],
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    if (_currentPageImage != null && _nextPageImage != null) {
+      return AnimatedBuilder(
+        animation: _flipController,
+        builder: (context, child) {
+          final rotationValue = _flipAnimation.value * math.pi;
+          final isUnder = (rotationValue > math.pi / 2);
+          final scale = _scaleAnimation.value;
+
+          if (_isFlippingUp) {
+            // Original animation: flips from bottom to top (swipe up)
+            return Transform.scale(
+              scale: scale,
+              child: Stack(
+                children: [
+                  // Next page bottom half - Always visible underneath
+                  Positioned(
+                    top: screenHeight * 0.5,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: CustomPaint(
+                      painter: _ImagePainter(
+                        image: _nextPageImage!,
+                        cropTop: false,
+                      ),
+                    ),
                   ),
+
+                  // Top Half - Static (switches when flip is halfway)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: ClipRect(
+                      child: CustomPaint(
+                        painter: _ImagePainter(
+                          image: isUnder ? _nextPageImage! : _currentPageImage!,
+                          cropTop: true,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Half - Flipping part
+                  Positioned(
+                    top: screenHeight * 0.5,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: Transform(
+                      alignment: Alignment.topCenter,
+                      transform:
+                          Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateX(-rotationValue),
+                      child: ClipRect(
+                        child:
+                            rotationValue <= math.pi / 2
+                                ? CustomPaint(
+                                  painter: _ImagePainter(
+                                    image: _currentPageImage!,
+                                    cropTop: false,
+                                  ),
+                                )
+                                : Transform(
+                                  alignment: Alignment.center,
+                                  transform:
+                                      Matrix4.identity()
+                                        ..setEntry(3, 2, 0.001)
+                                        ..rotateX(math.pi),
+                                  child: CustomPaint(
+                                    painter: _ImagePainter(
+                                      image: _nextPageImage!,
+                                      cropTop: true,
+                                    ),
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+
+                  // Center divider line
+                  Positioned(
+                    top: screenHeight * 0.5 - 1,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 2,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.3),
+                            Colors.black.withOpacity(0.6),
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Reversed animation: flips from top to bottom (swipe down)
+            return Transform.scale(
+              scale: scale,
+              child: Stack(
+                children: [
+                  // Next page top half - Always visible underneath
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: CustomPaint(
+                      painter: _ImagePainter(
+                        image: _nextPageImage!,
+                        cropTop: true,
+                      ),
+                    ),
+                  ),
+
+                  // Bottom Half - Static (switches when flip is halfway)
+                  Positioned(
+                    top: screenHeight * 0.5,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: ClipRect(
+                      child: CustomPaint(
+                        painter: _ImagePainter(
+                          image: isUnder ? _nextPageImage! : _currentPageImage!,
+                          cropTop: false,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Top Half - Flipping part
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: screenHeight * 0.5,
+                    child: Transform(
+                      alignment: Alignment.bottomCenter,
+                      transform:
+                          Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateX(rotationValue),
+                      child: ClipRect(
+                        child:
+                            rotationValue <= math.pi / 2
+                                ? CustomPaint(
+                                  painter: _ImagePainter(
+                                    image: _currentPageImage!,
+                                    cropTop: true,
+                                  ),
+                                )
+                                : Transform(
+                                  alignment: Alignment.center,
+                                  transform:
+                                      Matrix4.identity()
+                                        ..setEntry(3, 2, 0.001)
+                                        ..rotateX(math.pi),
+                                  child: CustomPaint(
+                                    painter: _ImagePainter(
+                                      image: _nextPageImage!,
+                                      cropTop: false,
+                                    ),
+                                  ),
+                                ),
+                      ),
+                    ),
+                  ),
+
+                  // Center divider line
+                  Positioned(
+                    top: screenHeight * 0.5 - 1,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 2,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withOpacity(0.3),
+                            Colors.black.withOpacity(0.6),
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        },
+      );
+    }
+
+    // Show pages off-screen for capturing
+    return Stack(
+      children: [
+        // Visible current page
+        RepaintBoundary(
+          key: _currentPageKey,
+          child: _buildPage(
+            data[currentPage]["screen_type"],
+            id: data[currentPage]["id"] ?? 0,
+            title: data[currentPage]["title"] ?? "title" ?? "title",
+            description: data[currentPage]["description"] ?? "description",
+            data: data[currentPage]["news"],
+          ),
+        ),
+        // Hidden next page for capture
+        if (nextPage >= 0 && nextPage < data.length)
+          Positioned(
+            left: -10000,
+            child: RepaintBoundary(
+              key: _nextPageKey,
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                child: _buildPage(
+                  data[nextPage]["screen_type"],
+                  id: data[currentPage]["id"] ?? 0,
+                  title: data[currentPage]["title"] ?? "title",
+                  description:
+                      data[currentPage]["description"] ?? "description",
+                  data: data[nextPage]["news"],
                 ),
               ),
             ),
           ),
-        );
-      },
+      ],
     );
   }
 
@@ -182,11 +443,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
               margin: const EdgeInsets.symmetric(horizontal: 12),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               decoration: BoxDecoration(
-                border: isSelected
-                    ? Border(
-                        bottom: BorderSide(color: Colors.red, width: 3),
-                      )
-                    : null,
+                border:
+                    isSelected
+                        ? Border(
+                          bottom: BorderSide(color: Colors.red, width: 3),
+                        )
+                        : null,
               ),
               child: Center(
                 child: Text(
@@ -194,9 +456,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    color: isSelected
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.6),
+                    color:
+                        isSelected
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -231,13 +494,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () {
-              pageController.animateToPage(
-                0,
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeInOut,
-              );
-              HapticFeedback.mediumImpact();
+            onTap: () async {
+              if (_flipController.isAnimating || _isCapturing) return;
+              if (currentPage > 0) {
+                await _prepareFlipAnimation(-currentPage);
+              }
             },
             child: Container(
               padding: const EdgeInsets.all(4),
@@ -404,76 +665,124 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                         ),
                       );
                     },
-                    child: currentPage == 0
-                        ? Container(
-                            key: ValueKey('categories'),
-                            color: Colors.transparent,
-                            child: Row(
-                              children: [
-                                // Logo section
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 16,
-                                    right: 8,
+                    child:
+                        currentPage == 0
+                            ? Container(
+                              key: ValueKey('categories'),
+                              color: Colors.transparent,
+                              child: Row(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 16,
+                                      right: 8,
+                                    ),
+                                    child: Image.asset(
+                                      'assets/images/logo.png',
+                                      width: 80,
+                                      height: 30,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
-                                  child: Image.asset(
-                                    'assets/images/logo.png',
-                                    width: 80,
-                                    height: 30,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                // Categories list
-                                Expanded(child: _buildCategoriesList()),
-                              ],
+                                  Expanded(child: _buildCategoriesList()),
+                                ],
+                              ),
+                            )
+                            : Container(
+                              key: ValueKey('back'),
+                              color: Colors.transparent,
+                              alignment: Alignment.centerRight,
+                              child: _buildBackHeader(),
                             ),
-                          )
-                        : Container(
-                            key: ValueKey('back'),
-                            color: Colors.transparent,
-                            alignment: Alignment.centerRight,
-                            child: _buildBackHeader(),
-                          ),
                   ),
                 ),
               ),
             ),
           ),
-          body: state is HomeNewsLoading
-              ? _buildLoadingState()
-              : state is HomeNewsFailure
+          body:
+              state is HomeNewsLoading
+                  ? _buildLoadingState()
+                  : state is HomeNewsFailure
                   ? _buildErrorState()
                   : state is HomeNewssuccess &&
-                          BlocProvider.of<HomeNewsCubit>(context)
-                              .screens
-                              .isEmpty
-                      ? _buildEmptyState()
-                      : PageView.builder(
-                          controller: pageController,
-                          scrollDirection: Axis.vertical,
-                          onPageChanged: (index) {
-                            setState(() {
-                              currentPage = index;
-                            });
-                            _resetAndStartAnimations();
-                            HapticFeedback.mediumImpact();
-                            
-                            // Check if we need to load more data
-                            _checkAndLoadMore(index);
-                          },
-                          itemBuilder: (context, index) {
-                            return SizedBox(
-                              width: size.width,
-                              height: size.height,
-                              child: _buildAnimatedPage(index),
-                            );
-                          },
-                          itemCount: BlocProvider.of<HomeNewsCubit>(context)
-                              .screens
-                              .length,
-                        ),
+                      BlocProvider.of<HomeNewsCubit>(context).screens.isEmpty
+                  ? _buildEmptyState()
+                  : GestureDetector(
+                    onVerticalDragEnd: (details) async {
+                      final cubit = BlocProvider.of<HomeNewsCubit>(context);
+                      if (_flipController.isAnimating || _isCapturing) return;
+
+                      if (details.primaryVelocity! < -500) {
+                        // Swipe up - next page
+                        if (currentPage < cubit.screens.length - 1) {
+                          await _prepareFlipAnimation(1);
+                        }
+                      } else if (details.primaryVelocity! > 500) {
+                        // Swipe down - previous page
+                        if (currentPage > 0) {
+                          await _prepareFlipAnimation(-1);
+                        }
+                      }
+                    },
+                    child: Container(
+                      width: size.width,
+                      height: size.height,
+                      color: Colors.transparent,
+                      child: _buildFlipPage(),
+                    ),
+                  ),
         );
       },
     );
+  }
+}
+
+class _ImagePainter extends CustomPainter {
+  final ui.Image image;
+  final bool cropTop;
+
+  _ImagePainter({required this.image, required this.cropTop});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final imageHeight = image.height.toDouble();
+    final imageWidth = image.width.toDouble();
+
+    final scaleX = size.width / imageWidth;
+    final scaleY = (size.height * 2) / imageHeight;
+    final scale = math.max(scaleX, scaleY);
+
+    final scaledWidth = imageWidth * scale;
+    final scaledHeight = imageHeight * scale;
+
+    final offsetX = (size.width - scaledWidth) / 2;
+    final offsetY = 0.0;
+
+    final srcRect =
+        cropTop
+            ? Rect.fromLTWH(0, 0, imageWidth, imageHeight / 2)
+            : Rect.fromLTWH(0, imageHeight / 2, imageWidth, imageHeight / 2);
+
+    final dstRect = Rect.fromLTWH(
+      offsetX,
+      offsetY,
+      scaledWidth,
+      scaledHeight / 2,
+    );
+
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawImageRect(
+      image,
+      srcRect,
+      dstRect,
+      Paint()..filterQuality = FilterQuality.high,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_ImagePainter oldDelegate) {
+    return oldDelegate.image != image || oldDelegate.cropTop != cropTop;
   }
 }

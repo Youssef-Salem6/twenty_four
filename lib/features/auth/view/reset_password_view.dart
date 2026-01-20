@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:twenty_four/core/nav_bar.dart';
-import 'package:twenty_four/features/auth/manager/login/login_cubit.dart';
-import 'package:twenty_four/features/auth/view/forget_password_view.dart';
-import 'package:twenty_four/features/auth/view/register_view.dart';
+import 'package:twenty_four/features/auth/manager/reset_password/reset_password_cubit.dart';
+import 'package:twenty_four/features/auth/view/login_view.dart';
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class ResetPasswordView extends StatefulWidget {
+  final String token;
+  const ResetPasswordView({super.key, required this.token});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<ResetPasswordView> createState() => _ResetPasswordViewState();
 }
 
-class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
-  final _emailController = TextEditingController();
-
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+class _ResetPasswordViewState extends State<ResetPasswordView>
+    with TickerProviderStateMixin {
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -69,24 +69,46 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _gradientController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin(BuildContext context) {
-    if (_emailController.text.trim().isEmpty) {
-      _showSnackBar(context, 'الرجاء إدخال البريد الإلكتروني', Colors.orange);
-      return;
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _showSnackBar(context, 'الرجاء إدخال كلمة المرور', Colors.orange);
+  void _handleResetPassword(BuildContext context) {
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // التحقق من الحقول الفارغة
+    if (newPassword.isEmpty) {
+      _showSnackBar(context, 'الرجاء إدخال كلمة المرور الجديدة', Colors.orange);
       return;
     }
 
-    context.read<LoginCubit>().login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+    if (confirmPassword.isEmpty) {
+      _showSnackBar(context, 'الرجاء تأكيد كلمة المرور', Colors.orange);
+      return;
+    }
+
+    // التحقق من طول كلمة المرور
+    if (newPassword.length < 8) {
+      _showSnackBar(
+        context,
+        'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
+        Colors.orange,
+      );
+      return;
+    }
+
+    // التحقق من تطابق كلمات المرور
+    if (newPassword != confirmPassword) {
+      _showSnackBar(context, 'كلمات المرور غير متطابقة', Colors.red);
+      return;
+    }
+
+    context.read<ResetPasswordCubit>().resetPassword(
+      token: widget.token,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
     );
   }
 
@@ -105,27 +127,26 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginCubit(),
-      child: BlocConsumer<LoginCubit, LoginState>(
+      create: (context) => ResetPasswordCubit(),
+      child: BlocConsumer<ResetPasswordCubit, ResetPasswordState>(
         listener: (context, state) {
-          if (state is LoginSuccess) {
-            _showSnackBar(context, state.message, Colors.green);
+          if (state is ResetPasswordSuccess) {
+            _showSnackBar(context, 'تم تغيير كلمة المرور بنجاح', Colors.green);
 
-            // FIX: Check if widget is still mounted before navigating
+            // العودة لصفحة تسجيل الدخول
             if (mounted) {
-              // Use WidgetsBinding to ensure navigation happens after frame
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+              Future.delayed(const Duration(seconds: 2), () {
                 if (mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const NavBar()),
+                    MaterialPageRoute(builder: (context) => const LoginView()),
                     (route) => false,
                   );
                 }
               });
             }
-          } else if (state is LoginFailure) {
-            _showSnackBar(context, state.message, Colors.red);
+          } else if (state is ResetPasswordFailure) {
+            _showSnackBar(context, state.errorMessage, Colors.red);
           }
         },
         builder: (context, state) {
@@ -171,6 +192,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
+                                  // أيقونة القفل
                                   TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0.8, end: 1.0),
                                     duration: const Duration(milliseconds: 800),
@@ -200,7 +222,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                             ],
                                           ),
                                           child: const Icon(
-                                            Icons.lock_outline,
+                                            Icons.vpn_key,
                                             size: 50,
                                             color: Colors.white,
                                           ),
@@ -209,8 +231,10 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     },
                                   ),
                                   const SizedBox(height: 40),
+
+                                  // العنوان
                                   const Text(
-                                    'مرحباً بعودتك',
+                                    'إعادة تعيين كلمة المرور',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 32,
@@ -221,7 +245,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'سجل الدخول للمتابعة',
+                                    'أدخل كلمة المرور الجديدة الخاصة بك',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 16,
@@ -230,110 +254,86 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   const SizedBox(height: 50),
+
+                                  // كلمة المرور الجديدة
                                   _buildTextField(
-                                    controller: _emailController,
-                                    hintText: 'البريد الإلكتروني',
-                                    icon: Icons.email_outlined,
-                                    keyboardType: TextInputType.emailAddress,
-                                  ),
-                                  const SizedBox(height: 20),
-                                  _buildTextField(
-                                    controller: _passwordController,
-                                    hintText: 'كلمة المرور',
+                                    controller: _newPasswordController,
+                                    hintText: 'كلمة المرور الجديدة',
                                     icon: Icons.lock_outline,
                                     isPassword: true,
+                                    obscurePassword: _obscureNewPassword,
+                                    onToggleVisibility: () {
+                                      setState(() {
+                                        _obscureNewPassword =
+                                            !_obscureNewPassword;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // تأكيد كلمة المرور
+                                  _buildTextField(
+                                    controller: _confirmPasswordController,
+                                    hintText: 'تأكيد كلمة المرور',
+                                    icon: Icons.lock_outline,
+                                    isPassword: true,
+                                    obscurePassword: _obscureConfirmPassword,
+                                    onToggleVisibility: () {
+                                      setState(() {
+                                        _obscureConfirmPassword =
+                                            !_obscureConfirmPassword;
+                                      });
+                                    },
                                   ),
                                   const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: TextButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const ForgetPasswordView(),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        'نسيت كلمة المرور؟',
-                                        style: TextStyle(
-                                          color: Colors.blue.shade300,
-                                          fontFamily: 'Almarai',
-                                        ),
+
+                                  // متطلبات كلمة المرور
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.1),
                                       ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'متطلبات كلمة المرور:',
+                                          style: TextStyle(
+                                            color: Colors.white.withOpacity(
+                                              0.9,
+                                            ),
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Almarai',
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildRequirement(
+                                          '• 8 أحرف على الأقل',
+                                          _newPasswordController.text.length >=
+                                              8,
+                                        ),
+                                        _buildRequirement(
+                                          '• يجب أن تتطابق كلمات المرور',
+                                          _newPasswordController
+                                                  .text
+                                                  .isNotEmpty &&
+                                              _newPasswordController.text ==
+                                                  _confirmPasswordController
+                                                      .text,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 30),
-                                  _buildLoginButton(context, state),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                        ),
-                                        child: Text(
-                                          'أو',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.6,
-                                            ),
-                                            fontFamily: 'Almarai',
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 30),
-                                  _buildGoogleButton(),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'ليس لديك حساب؟ ',
-                                        style: TextStyle(
-                                          color: Colors.white.withOpacity(0.7),
-                                          fontFamily: 'Almarai',
-                                        ),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      const RegisterView(),
-                                            ),
-                                          );
-                                        },
-                                        child: Text(
-                                          'إنشاء حساب',
-                                          style: TextStyle(
-                                            color: Colors.blue.shade300,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'Almarai',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+
+                                  // زر تغيير كلمة المرور
+                                  _buildResetButton(context, state),
                                 ],
                               ),
                             ),
@@ -342,7 +342,9 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  if (state is LoginLoading)
+
+                  // شاشة التحميل
+                  if (state is ResetPasswordLoading)
                     Container(
                       color: Colors.black54,
                       child: Center(
@@ -368,7 +370,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                               ),
                               const SizedBox(height: 16),
                               const Text(
-                                'جاري تسجيل الدخول...',
+                                'جاري تغيير كلمة المرور...',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -389,12 +391,39 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildRequirement(String text, bool isMet) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.circle_outlined,
+            size: 16,
+            color:
+                isMet ? Colors.green.shade400 : Colors.white.withOpacity(0.5),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color:
+                  isMet ? Colors.green.shade400 : Colors.white.withOpacity(0.6),
+              fontFamily: 'Almarai',
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
     bool isPassword = false,
-    TextInputType? keyboardType,
+    bool obscurePassword = true,
+    VoidCallback? onToggleVisibility,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -409,8 +438,8 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isPassword && _obscurePassword,
-        keyboardType: keyboardType,
+        obscureText: isPassword && obscurePassword,
+        onChanged: (value) => setState(() {}), // لتحديث المؤشرات
         style: const TextStyle(color: Colors.white, fontFamily: 'Almarai'),
         decoration: InputDecoration(
           hintText: hintText,
@@ -423,16 +452,10 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
               isPassword
                   ? IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                      obscurePassword ? Icons.visibility_off : Icons.visibility,
                       color: Colors.white.withOpacity(0.5),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+                    onPressed: onToggleVisibility,
                   )
                   : null,
           filled: true,
@@ -457,8 +480,8 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildLoginButton(BuildContext context, LoginState state) {
-    bool isLoading = state is LoginLoading;
+  Widget _buildResetButton(BuildContext context, ResetPasswordState state) {
+    bool isLoading = state is ResetPasswordLoading;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -482,7 +505,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading ? null : () => _handleLogin(context),
+          onTap: isLoading ? null : () => _handleResetPassword(context),
           borderRadius: BorderRadius.circular(16),
           child: Center(
             child:
@@ -496,7 +519,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                       ),
                     )
                     : const Text(
-                      'تسجيل الدخول',
+                      'تغيير كلمة المرور',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -504,59 +527,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                         fontFamily: 'Almarai',
                       ),
                     ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleButton() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            try {} catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('google login failed: $e')),
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.network(
-                'https://www.google.com/favicon.ico',
-                height: 24,
-                width: 24,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.g_mobiledata, size: 24);
-                },
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'متابعة باستخدام جوجل',
-                style: TextStyle(
-                  color: Color(0xff2b2f3a),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Almarai',
-                ),
-              ),
-            ],
           ),
         ),
       ),

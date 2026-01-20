@@ -5,6 +5,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:twenty_four/core/themes/manager/themesCubit/themes_cubit.dart';
 import 'package:twenty_four/core/themes/themes.dart';
+import 'package:twenty_four/features/auth/manager/forget_password/forget_pssword_cubit.dart';
+import 'package:twenty_four/features/auth/manager/reset_password/reset_password_cubit.dart';
+import 'package:twenty_four/features/auth/manager/send_otp/send_otp_cubit.dart';
 import 'package:twenty_four/features/comments/manager/add_comment/add_comment_cubit.dart';
 import 'package:twenty_four/features/comments/manager/getComments/get_all_comments_cubit.dart';
 import 'package:twenty_four/features/following/manager/getSources/get_sources_cubit.dart';
@@ -63,6 +66,9 @@ class AppView extends StatelessWidget {
             BlocProvider(create: (context) => GetAllCommentsCubit()),
             BlocProvider(create: (context) => AddCommentCubit()),
             BlocProvider(create: (context) => ToggleFollowCubit()),
+            BlocProvider(create: (context) => ForgetPsswordCubit()),
+            BlocProvider(create: (context) => SendOtpCubit()),
+            BlocProvider(create: (context) => ResetPasswordCubit()),
           ],
           child: MaterialApp(
             debugShowCheckedModeBanner: false,

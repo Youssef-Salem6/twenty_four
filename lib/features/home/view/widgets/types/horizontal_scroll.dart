@@ -9,7 +9,15 @@ import 'package:twenty_four/main.dart';
 
 class HorizontalScroll extends StatelessWidget {
   final List news;
-  const HorizontalScroll({super.key, required this.news});
+  final String description, title;
+  final int id;
+  const HorizontalScroll({
+    super.key,
+    required this.news,
+    required this.description,
+    required this.title,
+    required this.id,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,26 +42,57 @@ class HorizontalScroll extends StatelessWidget {
                   colors: [Color(0xFF2B2F3A), Color(0xFF151924)],
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Gap(8),
-                  const Text(
-                    "كلما اتبعت أكثر، كان ذلك أفضل",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 26,
-                      color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 12,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Gap(8),
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.right,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            description,
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                            textAlign: TextAlign.right,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "اجعل FlipBoard خاص بك عن طريق متابعة المجلات",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                    Expanded(
+                      flex: 1,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NewsDetailsView(id: id),
+                            ),
+                          );
+                        },
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

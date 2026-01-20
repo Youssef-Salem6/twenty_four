@@ -25,3 +25,8 @@ String searchArticalUrl = "$getNewsDetailsUrl?search";
 const String getSourcesUrl = "$endPoint/news-sources";
 String toggleFollowSourceUrl({required String sourceId}) =>
     "$getSourcesUrl/$sourceId/toggle-follow";
+
+//reset password
+const String forgetPsswordApi = "$endPoint/forgot-password";
+const String verifyCodeApi = "$endPoint/verify-otp";
+const String resetPasswordApi = "$endPoint/reset-password";

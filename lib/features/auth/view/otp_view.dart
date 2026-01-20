@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:twenty_four/core/nav_bar.dart';
-import 'package:twenty_four/features/auth/manager/login/login_cubit.dart';
-import 'package:twenty_four/features/auth/view/forget_password_view.dart';
-import 'package:twenty_four/features/auth/view/register_view.dart';
+import 'package:pinput/pinput.dart';
+import 'package:twenty_four/features/auth/manager/send_otp/send_otp_cubit.dart';
+import 'package:twenty_four/features/auth/view/reset_password_view.dart';
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class OtpView extends StatefulWidget {
+  final String token;
+  const OtpView({super.key, required this.token});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<OtpView> createState() => _OtpViewState();
 }
 
-class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
-  final _emailController = TextEditingController();
-
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
+class _OtpViewState extends State<OtpView> with TickerProviderStateMixin {
+  final _pinController = TextEditingController();
+  final _focusNode = FocusNode();
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -69,24 +67,29 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _gradientController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _pinController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _handleLogin(BuildContext context) {
-    if (_emailController.text.trim().isEmpty) {
-      _showSnackBar(context, 'الرجاء إدخال البريد الإلكتروني', Colors.orange);
-      return;
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _showSnackBar(context, 'الرجاء إدخال كلمة المرور', Colors.orange);
+  void _handleVerifyOtp(BuildContext context) {
+    if (_pinController.text.trim().isEmpty) {
+      _showSnackBar(context, 'الرجاء إدخال رمز التحقق', Colors.orange);
       return;
     }
 
-    context.read<LoginCubit>().login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+    if (_pinController.text.trim().length < 6) {
+      _showSnackBar(
+        context,
+        'الرجاء إدخال الرمز كاملاً (6 أرقام)',
+        Colors.orange,
+      );
+      return;
+    }
+
+    context.read<SendOtpCubit>().sendOtp(
+      code: _pinController.text.trim(),
+      token: "", // enter token here
     );
   }
 
@@ -105,26 +108,27 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => LoginCubit(),
-      child: BlocConsumer<LoginCubit, LoginState>(
+      create: (context) => SendOtpCubit(),
+      child: BlocConsumer<SendOtpCubit, SendOtpState>(
         listener: (context, state) {
-          if (state is LoginSuccess) {
-            _showSnackBar(context, state.message, Colors.green);
+          if (state is SendOtpSuccess) {
+            _showSnackBar(context, 'تم التحقق من الرمز بنجاح', Colors.green);
 
-            // FIX: Check if widget is still mounted before navigating
+            // الانتقال للصفحة التالية (صفحة إعادة تعيين كلمة المرور)
             if (mounted) {
-              // Use WidgetsBinding to ensure navigation happens after frame
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) {
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const NavBar()),
-                    (route) => false,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => ResetPasswordView(token: state.token),
+                    ),
                   );
                 }
               });
             }
-          } else if (state is LoginFailure) {
+          } else if (state is SendOtpFailure) {
             _showSnackBar(context, state.message, Colors.red);
           }
         },
@@ -171,6 +175,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
+                                  // أيقونة الرسالة
                                   TweenAnimationBuilder(
                                     tween: Tween<double>(begin: 0.8, end: 1.0),
                                     duration: const Duration(milliseconds: 800),
@@ -200,7 +205,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                             ],
                                           ),
                                           child: const Icon(
-                                            Icons.lock_outline,
+                                            Icons.mark_email_read_outlined,
                                             size: 50,
                                             color: Colors.white,
                                           ),
@@ -209,8 +214,10 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                     },
                                   ),
                                   const SizedBox(height: 40),
+
+                                  // العنوان
                                   const Text(
-                                    'مرحباً بعودتك',
+                                    'التحقق من البريد الإلكتروني',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 32,
@@ -221,7 +228,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'سجل الدخول للمتابعة',
+                                    'أدخل رمز التحقق المكون من 6 أرقام المرسل إلى',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 16,
@@ -229,84 +236,22 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                       fontFamily: 'Almarai',
                                     ),
                                   ),
+
                                   const SizedBox(height: 50),
-                                  _buildTextField(
-                                    controller: _emailController,
-                                    hintText: 'البريد الإلكتروني',
-                                    icon: Icons.email_outlined,
-                                    keyboardType: TextInputType.emailAddress,
-                                  ),
+                                  // حقل إدخال OTP
+                                  _buildPinput(),
+                                  const SizedBox(height: 30),
+
+                                  // زر التحقق
+                                  _buildVerifyButton(context, state),
                                   const SizedBox(height: 20),
-                                  _buildTextField(
-                                    controller: _passwordController,
-                                    hintText: 'كلمة المرور',
-                                    icon: Icons.lock_outline,
-                                    isPassword: true,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: TextButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const ForgetPasswordView(),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        'نسيت كلمة المرور؟',
-                                        style: TextStyle(
-                                          color: Colors.blue.shade300,
-                                          fontFamily: 'Almarai',
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 30),
-                                  _buildLoginButton(context, state),
-                                  const SizedBox(height: 30),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                        ),
-                                        child: Text(
-                                          'أو',
-                                          style: TextStyle(
-                                            color: Colors.white.withOpacity(
-                                              0.6,
-                                            ),
-                                            fontFamily: 'Almarai',
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Divider(
-                                          color: Colors.white.withOpacity(0.3),
-                                          thickness: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 30),
-                                  _buildGoogleButton(),
-                                  const SizedBox(height: 30),
+
+                                  // إعادة إرسال الرمز
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        'ليس لديك حساب؟ ',
+                                        'لم يصلك الرمز؟ ',
                                         style: TextStyle(
                                           color: Colors.white.withOpacity(0.7),
                                           fontFamily: 'Almarai',
@@ -314,17 +259,15 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                                       ),
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.push(
+                                          _showSnackBar(
                                             context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      const RegisterView(),
-                                            ),
+                                            'تم إعادة إرسال الرمز',
+                                            Colors.blue,
                                           );
+                                          // TODO: Implement resend OTP logic
                                         },
                                         child: Text(
-                                          'إنشاء حساب',
+                                          'إعادة الإرسال',
                                           style: TextStyle(
                                             color: Colors.blue.shade300,
                                             fontWeight: FontWeight.bold,
@@ -342,7 +285,9 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  if (state is LoginLoading)
+
+                  // شاشة التحميل
+                  if (state is SendOtpLoading)
                     Container(
                       color: Colors.black54,
                       child: Center(
@@ -368,7 +313,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                               ),
                               const SizedBox(height: 16),
                               const Text(
-                                'جاري تسجيل الدخول...',
+                                'جاري التحقق...',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
@@ -389,76 +334,72 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    bool isPassword = false,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
+  Widget _buildPinput() {
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 60,
+      textStyle: const TextStyle(
+        fontSize: 22,
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        fontFamily: 'Almarai',
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: Colors.blue.shade300, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.blue.withOpacity(0.2),
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            spreadRadius: 2,
           ),
         ],
       ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword && _obscurePassword,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white, fontFamily: 'Almarai'),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.5),
-            fontFamily: 'Almarai',
-          ),
-          prefixIcon: Icon(icon, color: Colors.blue.shade300),
-          suffixIcon:
-              isPassword
-                  ? IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  )
-                  : null,
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.1),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.blue.shade300, width: 2),
-          ),
-        ),
+    );
+
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        color: Colors.white.withOpacity(0.15),
+        border: Border.all(color: Colors.blue.shade400),
+      ),
+    );
+
+    final errorPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: Colors.red.shade400, width: 2),
+      ),
+    );
+
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Pinput(
+        controller: _pinController,
+        focusNode: _focusNode,
+        length: 6,
+        defaultPinTheme: defaultPinTheme,
+        focusedPinTheme: focusedPinTheme,
+        submittedPinTheme: submittedPinTheme,
+        errorPinTheme: errorPinTheme,
+        pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+        showCursor: true,
+        cursor: Container(width: 2, height: 24, color: Colors.blue.shade300),
+        onCompleted: (pin) {
+          // يمكن التحقق تلقائياً عند إكمال الإدخال
+          // _handleVerifyOtp(context);
+        },
       ),
     );
   }
 
-  Widget _buildLoginButton(BuildContext context, LoginState state) {
-    bool isLoading = state is LoginLoading;
+  Widget _buildVerifyButton(BuildContext context, SendOtpState state) {
+    bool isLoading = state is SendOtpLoading;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -482,7 +423,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading ? null : () => _handleLogin(context),
+          onTap: isLoading ? null : () => _handleVerifyOtp(context),
           borderRadius: BorderRadius.circular(16),
           child: Center(
             child:
@@ -496,7 +437,7 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                       ),
                     )
                     : const Text(
-                      'تسجيل الدخول',
+                      'تحقق من الرمز',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -504,59 +445,6 @@ class _LoginViewState extends State<LoginView> with TickerProviderStateMixin {
                         fontFamily: 'Almarai',
                       ),
                     ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoogleButton() {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            try {} catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('google login failed: $e')),
-              );
-            }
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.network(
-                'https://www.google.com/favicon.ico',
-                height: 24,
-                width: 24,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.g_mobiledata, size: 24);
-                },
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'متابعة باستخدام جوجل',
-                style: TextStyle(
-                  color: Color(0xff2b2f3a),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Almarai',
-                ),
-              ),
-            ],
           ),
         ),
       ),
